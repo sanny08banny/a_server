@@ -1,0 +1,11 @@
+/home/hanson/Documents/Dev/house_server/target/x86_64-pc-windows-gnu/debug/deps/socket2-2994a852bbd4e9c7.rmeta: /home/hanson/.cargo/registry/src/index.crates.io-6f17d22bba15001f/socket2-0.5.3/src/lib.rs /home/hanson/.cargo/registry/src/index.crates.io-6f17d22bba15001f/socket2-0.5.3/src/sockaddr.rs /home/hanson/.cargo/registry/src/index.crates.io-6f17d22bba15001f/socket2-0.5.3/src/socket.rs /home/hanson/.cargo/registry/src/index.crates.io-6f17d22bba15001f/socket2-0.5.3/src/sockref.rs /home/hanson/.cargo/registry/src/index.crates.io-6f17d22bba15001f/socket2-0.5.3/src/sys/windows.rs
+
+/home/hanson/Documents/Dev/house_server/target/x86_64-pc-windows-gnu/debug/deps/libsocket2-2994a852bbd4e9c7.rlib: /home/hanson/.cargo/registry/src/index.crates.io-6f17d22bba15001f/socket2-0.5.3/src/lib.rs /home/hanson/.cargo/registry/src/index.crates.io-6f17d22bba15001f/socket2-0.5.3/src/sockaddr.rs /home/hanson/.cargo/registry/src/index.crates.io-6f17d22bba15001f/socket2-0.5.3/src/socket.rs /home/hanson/.cargo/registry/src/index.crates.io-6f17d22bba15001f/socket2-0.5.3/src/sockref.rs /home/hanson/.cargo/registry/src/index.crates.io-6f17d22bba15001f/socket2-0.5.3/src/sys/windows.rs
+
+/home/hanson/Documents/Dev/house_server/target/x86_64-pc-windows-gnu/debug/deps/socket2-2994a852bbd4e9c7.d: /home/hanson/.cargo/registry/src/index.crates.io-6f17d22bba15001f/socket2-0.5.3/src/lib.rs /home/hanson/.cargo/registry/src/index.crates.io-6f17d22bba15001f/socket2-0.5.3/src/sockaddr.rs /home/hanson/.cargo/registry/src/index.crates.io-6f17d22bba15001f/socket2-0.5.3/src/socket.rs /home/hanson/.cargo/registry/src/index.crates.io-6f17d22bba15001f/socket2-0.5.3/src/sockref.rs /home/hanson/.cargo/registry/src/index.crates.io-6f17d22bba15001f/socket2-0.5.3/src/sys/windows.rs
+
+/home/hanson/.cargo/registry/src/index.crates.io-6f17d22bba15001f/socket2-0.5.3/src/lib.rs:
+/home/hanson/.cargo/registry/src/index.crates.io-6f17d22bba15001f/socket2-0.5.3/src/sockaddr.rs:
+/home/hanson/.cargo/registry/src/index.crates.io-6f17d22bba15001f/socket2-0.5.3/src/socket.rs:
+/home/hanson/.cargo/registry/src/index.crates.io-6f17d22bba15001f/socket2-0.5.3/src/sockref.rs:
+/home/hanson/.cargo/registry/src/index.crates.io-6f17d22bba15001f/socket2-0.5.3/src/sys/windows.rs:

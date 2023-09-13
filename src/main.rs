@@ -1,8 +1,9 @@
 use axum::{
     extract::{Json, Path},
-    routing::{get, Router},
+    routing::{get, Router, post},
+    body::{Bytes,Body}
 };
-use hyper::{Body, Response};
+use hyper::Response;
 use serde_json::Value;
 use std::{
     fs::{self, File},
@@ -18,6 +19,7 @@ async fn main() {
         .route("/houses", get(handler))
         .route("/houses/:path", get(image_handler))
         .route("/houses/download/:path", get(download_img))
+        .route("/houses/upload/:filename", post(img_upload))
         .layer(CorsLayer::permissive());
     axum::Server::bind(&addr.trim().parse().expect("Invalid address"))
         .serve(app.into_make_service_with_connect_info::<SocketAddr>())
@@ -31,6 +33,7 @@ async fn handler() -> Json<Value> {
 }
 
 async fn image_handler(path: Path<String>) -> Response<Body> {
+    println!("file path: {:?}",path.0);
     let h = File::open(path.0).expect("file not found");
     let mut buf_reader = BufReader::new(h);
     let mut contents = Vec::new();
@@ -48,4 +51,9 @@ async fn download_img(path: Path<String>) -> Response<Body> {
         .header("Content-Disposition", attachment)
         .body(Body::from(contents))
         .unwrap()
+}
+
+async fn img_upload(path:Path<String>,body: Bytes){
+    let img = image::load_from_memory(&body).unwrap();
+    img.save(path.0).unwrap();
 }
