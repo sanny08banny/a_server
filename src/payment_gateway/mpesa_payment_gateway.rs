@@ -14,7 +14,7 @@ pub struct MpesaPaymentProcessor {
     password: String,
     timestamp: String,
     transaction_type: String,
-    amount: i32,
+    amount: f32,
     party_a: String,
     party_b: i32,
     phone_number: String,
@@ -23,7 +23,7 @@ pub struct MpesaPaymentProcessor {
     transaction_desc: String,
 }
 impl MpesaPaymentProcessor {
-    pub fn new(amount: i32, phone_number: &str, description: &str) -> Self {
+    pub fn new(amount: f32, phone_number: &str, description: &str) -> Self {
         let merchant = Merchant::get_credentials();
         let timestamp = Local::now().format("%Y%m%d%H%M%S").to_string();
         const CUSTOM_ENGINE: engine::GeneralPurpose =
@@ -42,7 +42,7 @@ impl MpesaPaymentProcessor {
             party_a: phone_number.to_owned(),
             party_b: merchant.business_short_code,
             phone_number: phone_number.to_owned(),
-            call_back_url: "https://mydomain.com/path".to_owned(),
+            call_back_url: "https://mydomain.com:4000/path".to_owned(),
             account_reference: "We Mzee".to_owned(),
             transaction_desc: description.to_owned(),
         }
