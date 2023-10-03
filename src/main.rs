@@ -1,9 +1,9 @@
 use axum::{
     body::{Body, Bytes},
     extract::{Json, Multipart, Path},
+    response::Response,
     routing::{get, post, Router},
 };
-use hyper::Response;
 use serde_json::Value;
 use std::{
     fs::{self, File},
@@ -83,12 +83,41 @@ async fn process_payment(payment_details: Json<PaymentDetails>) {
 }
 
 async fn mult_upload(mut multipart: Multipart) {
+    let mut admin_id = String::new();
+    let mut house_id = String::new();
+    let mut img_path = String::new();
     while let Some(field) = multipart.next_field().await.unwrap() {
         let name = field.name().unwrap().to_string();
-        let data = field.bytes().await.unwrap();
-        println!("Length of `{}` is {} bytes", name, data.len());
+        println!("type {:?}", field.content_type());
+        if name == "admin_id" {
+            admin_id = field.text().await.unwrap();
+        } else if name == "house_id" {
+            house_id = field.text().await.unwrap();
+            img_path = format!("images/{}/{}/", admin_id, house_id);
+            match fs::create_dir_all(&img_path) {
+                Ok(_) => {}
+                Err(e) => {
+                    println!("failed to create directories {}", e)
+                }
+            }
+        } else {
+            let img = image::load_from_memory(&field.bytes().await.unwrap()).unwrap();
+            img_path.push_str(&name);
+            match img.save(&img_path) {
+                Ok(_) => {}
+                Err(e) => {
+                    println!("Failed to save image: {}", e)
+                }
+            }
+            println!("Length of `{}` ", img_path);
+            img_path = img_path.replace(&name, "");
+        }
     }
 }
 // Stats page
 // Customer support AI
 // email server smtp
+
+//* |admin_id|price|tour_price|approx_location|house_id(primary key)|House images[Array]
+
+// *
