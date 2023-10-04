@@ -1,3 +1,5 @@
+use crate::r::r_tokens::R;
+
 use super::car::Car;
 struct Owner{
     user_name:String,
@@ -6,6 +8,6 @@ struct Owner{
     password:String,
     owner_id:String,
     verified:bool,
-    tokens:f32,
+    tokens:R,
     cars:Vec<Car>
 }

@@ -1,12 +1,10 @@
-use base64::{
-    alphabet,
-    engine::{self, general_purpose},
-    Engine,
-};
+use base64::Engine;
 use chrono::Local;
 use reqwest::{header, Client};
 use serde_json::{json, Value};
 
+
+use crate::ecryption_engine::CUSTOM_ENGINE;
 use crate::payment_gateway::merchant_portal::Merchant;
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct MpesaPaymentProcessor {
@@ -26,8 +24,6 @@ impl MpesaPaymentProcessor {
     pub fn new(amount: f32, phone_number: &str, description: &str) -> Self {
         let merchant = Merchant::get_credentials();
         let timestamp = Local::now().format("%Y%m%d%H%M%S").to_string();
-        const CUSTOM_ENGINE: engine::GeneralPurpose =
-            engine::GeneralPurpose::new(&alphabet::URL_SAFE, general_purpose::NO_PAD);
         let input = format!(
             "{}{}{}",
             merchant.business_short_code, merchant.pass_key, timestamp

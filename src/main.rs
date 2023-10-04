@@ -12,8 +12,10 @@ use std::{
 };
 use tower_http::cors::CorsLayer;
 mod payment_gateway;
-mod r_tokens;
+mod r;
 mod rental;
+mod verification;
+mod ecryption_engine;
 use payment_gateway::mpesa_payment_gateway::MpesaPaymentProcessor;
 
 #[derive(serde::Deserialize)]
@@ -26,12 +28,12 @@ struct PaymentDetails {
 async fn main() {
     let addr = "0.0.0.0:4000";
     let app = Router::new()
-        .route("/houses", get(handler))
-        .route("/houses/:path", get(image_handler))
-        .route("/houses/download/:path", get(download_img))
+        .route("/cars", get(handler))
+        .route("/car/:path", get(image_handler))
+        .route("/car/download/:path", get(download_img))
         .route("/buyr", post(process_payment))
-        .route("/houses/upload/:filename", post(img_upload))
-        .route("/houses/mult_upload", post(mult_upload))
+        .route("/car/upload/:filename", post(img_upload))
+        .route("/car/mult_upload", post(mult_upload))
         .route("/path", post(call_back_url))
         .layer(CorsLayer::permissive());
     axum::Server::bind(&addr.trim().parse().expect("Invalid address"))
