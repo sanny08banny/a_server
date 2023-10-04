@@ -13,6 +13,7 @@ use std::{
 use tower_http::cors::CorsLayer;
 mod payment_gateway;
 mod r_tokens;
+mod rental;
 use payment_gateway::mpesa_payment_gateway::MpesaPaymentProcessor;
 
 #[derive(serde::Deserialize)]
