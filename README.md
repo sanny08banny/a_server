@@ -21,4 +21,5 @@ juu hakuna app huboo kama yenye inakuforce ulogin ama ucreate account na we unat
 If someone chooses to pay via mpesa, the app should send the request in this format
 <br>
 ![image](https://github.com/GithinjiHans/house_server/assets/92337850/b34e5d4b-362c-4534-88fb-73f97875c758)
+<br>
 if they choose to pay via the tokens, they'll send the request in this format, to the same endpoint as mpesa payment.
