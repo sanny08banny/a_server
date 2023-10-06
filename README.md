@@ -15,7 +15,7 @@ user akiclick a certain car ataenda kwa car details page, where you'll make this
 
 All that ni for any user, logged in or not
 juu hakuna app huboo kama yenye inakuforce ulogin ama ucreate account na we unataka tu kuona what they're offering
-
+<br>
 ![image](https://github.com/GithinjiHans/house_server/assets/92337850/73443dc7-62bf-4e49-b979-0b6d56ee2de9)
 <br>
 If someone chooses to pay via mpesa, the app should send the request in this format
