@@ -1,0 +1,42 @@
+[
+    {
+        "car_images": ["img1.jpg,img2.jpg,img3.jpg"],
+        "model": "CX-5",
+        "car_id": "KAX-5767",
+        "owner_id": "9930fred",
+        "location": "Nairobi",
+        "description": "",
+        "pricing": {
+            "hourly": {
+                "amount": 500.00,
+                "downpayment_amt": 500.00
+            },
+            "daily": {
+                "amount": 5000.00,
+                "downpayment_amt": 1000.00
+            }
+        },
+        "available": true,
+        "verified": true
+    },
+    {
+        "car_images": ["img1.jpg,img2.jpg,img3.jpg"],
+        "model": "Lamborghini",
+        "car_id": "KDE-598A",
+        "owner_id": "Andrew3030",
+        "location": "Nairobi",
+        "description": "",
+        "pricing": {
+            "hourly": {
+                "amount": 1500.00,
+                "downpayment_amt": 1500.00
+            },
+            "daily": {
+                "amount": 10000.00,
+                "downpayment_amt": 4200.00
+            }
+        },
+        "available": true,
+        "verified": true
+    }
+]

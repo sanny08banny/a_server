@@ -14,5 +14,6 @@ pub struct Car {
 
 enum Charges {
     Hourly,
-    PerDay,
+    Daily,
 }
+
