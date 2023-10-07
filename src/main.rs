@@ -105,6 +105,7 @@ async fn mult_upload(mut multipart: Multipart) {
             }
         } else {
             let img = image::load_from_memory(&field.bytes().await.unwrap()).unwrap();
+            
             img_path.push_str(&name);
             match img.save(&img_path) {
                 Ok(_) => {}

@@ -1,6 +1,6 @@
 [
     {
-        "car_images": ["img1.jpg,img2.jpg,img3.jpg"],
+        "car_images": ["humberto-portillo-ghwx9-wDn-w-unsplash.jpg"],
         "model": "CX-5",
         "car_id": "KAX-5767",
         "owner_id": "9930fred",
@@ -20,7 +20,7 @@
         "verified": true
     },
     {
-        "car_images": ["img1.jpg,img2.jpg,img3.jpg"],
+        "car_images": ["dhiva-krishna-X16zXcbxU4U-unsplash.jpg"],
         "model": "Lamborghini",
         "car_id": "KDE-598A",
         "owner_id": "Andrew3030",
