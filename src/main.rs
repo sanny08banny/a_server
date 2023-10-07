@@ -45,7 +45,7 @@ async fn main() {
         .unwrap();
 }
 async fn handler() -> Json<Value> {
-    let y = fs::read_to_string("test.json").expect("json file not found");
+    let y = fs::read_to_string("src/dummy/cars.json").expect("json file not found");
     let x: Value = serde_json::from_str(&y).expect("invalid json");
     Json(x)
 }
