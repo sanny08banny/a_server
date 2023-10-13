@@ -33,7 +33,7 @@ async fn main() {
         .route("/cars", get(handler))
         .route("/car_img", get(image_handler))
         .route("/car/book", post(book))
-        .route("/car/download/:owner_id/:car_id/:file_name", get(download_img))
+        .route("/car/:owner_id/:car_id/:file_name", get(download_img))
         .route("/buyr", post(process_payment))
         .route("/car/upload/:filename", post(img_upload))
         .route("/car/mult_upload", post(mult_upload))
