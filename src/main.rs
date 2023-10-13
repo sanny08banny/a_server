@@ -33,7 +33,7 @@ async fn main() {
         .route("/cars", get(handler))
         .route("/car_img", get(image_handler))
         .route("/car/book", post(book))
-        .route("/car/download/:path", get(download_img))
+        .route("/car/download/:owner_id/:car_id/:file_name", get(download_img))
         .route("/buyr", post(process_payment))
         .route("/car/upload/:filename", post(img_upload))
         .route("/car/mult_upload", post(mult_upload))
@@ -52,16 +52,18 @@ async fn handler() -> Json<Value> {
 async fn call_back_url(j: Json<Value>) {
     println!("Saf says:: {}", j.0);
 }
-async fn download_img(path: Path<String>) -> Response<Body> {
-    let h = File::open(path.0.clone()).expect("file not found");
+async fn download_img(owner_id: Path<String>,car_id:Path<String>,file_name:Path<String>) -> Response<Body> {
+    let p= format!("images/{}/{}/{}/",owner_id.0,car_id.0,file_name.0);
+    let h = File::open(p.clone()).expect("file not found");
     let mut buf_reader = BufReader::new(h);
     let mut contents = Vec::new();
     buf_reader.read_to_end(&mut contents).unwrap();
-    let attachment = format!("attachment; filename={}", path.0);
-    Response::builder()
-        .header("Content-Disposition", attachment)
-        .body(Body::from(contents))
-        .unwrap()
+    // let attachment = format!("attachment; filename={}", p);
+    // Response::builder()
+    //     .header("Content-Disposition", attachment)
+    //     .body(Body::from(contents))
+    //     .unwrap()
+    Response::new(Body::from(contents))
 }
 
 async fn img_upload(path: Path<String>, body: Bytes) {
@@ -87,7 +89,7 @@ async fn book(req_details: Json<Value>) {
 }
 async fn mult_upload(mut multipart: Multipart) {
     let mut admin_id = String::new();
-    let mut house_id = String::new();
+    let mut car_id = String::new();
     let mut img_path = String::new();
     while let Some(field) = multipart.next_field().await.unwrap() {
         let name = field.name().unwrap().to_string();
@@ -95,8 +97,8 @@ async fn mult_upload(mut multipart: Multipart) {
         if name == "admin_id" {
             admin_id = field.text().await.unwrap();
         } else if name == "car_id" {
-            house_id = field.text().await.unwrap();
-            img_path = format!("images/{}/{}/", admin_id, house_id);
+            car_id = field.text().await.unwrap();
+            img_path = format!("images/{}/{}/", admin_id, car_id);
             match fs::create_dir_all(&img_path) {
                 Ok(_) => {}
                 Err(e) => {
