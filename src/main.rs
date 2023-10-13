@@ -52,8 +52,13 @@ async fn handler() -> Json<Value> {
 async fn call_back_url(j: Json<Value>) {
     println!("Saf says:: {}", j.0);
 }
-async fn download_img(owner_id: Path<String>,car_id:Path<String>,file_name:Path<String>) -> Response<Body> {
-    let p= format!("images/{}/{}/{}/",owner_id.0,car_id.0,file_name.0);
+async fn download_img(params:Path<Vec<String>>) -> Response<Body> {
+    let mut o=params.0.iter();
+    let owner_id=o.next().unwrap();
+    let car_id=o.next().unwrap();
+    let file_name=o.next().unwrap();
+    let p= format!("images/{}/{}/{}",owner_id,car_id,file_name);
+    println!("{}",p);
     let h = File::open(p.clone()).expect("file not found");
     let mut buf_reader = BufReader::new(h);
     let mut contents = Vec::new();
