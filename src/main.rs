@@ -26,6 +26,11 @@ struct PaymentDetails {
     phone_number: String,
     description: String,
 }
+#[derive(serde::Deserialize)]
+struct BookingDetails{
+    user_id:String,
+    car_id:String
+}
 #[tokio::main]
 async fn main() {
     let addr = "0.0.0.0:4000";
@@ -36,6 +41,7 @@ async fn main() {
         .route("/car/:owner_id/:car_id/:file_name", get(download_img))
         .route("/buyr", post(process_payment))
         .route("/car/upload/:filename", post(img_upload))
+        .route("/car/book",post(book))
         .route("/car/mult_upload", post(mult_upload))
         .route("/path", post(call_back_url))
         .layer(CorsLayer::permissive());
@@ -86,11 +92,8 @@ async fn process_payment(payment_details: Json<PaymentDetails>) {
     println!("{:?}", processor.handle_payment().await);
 }
 
-async fn book(req_details: Json<Value>) {
-    let details = req_details.0;
-    // * {userid:"",car_id:"",pricing_option:""}
-    // TODO: Check the user's and car's validation status
-    // TODO: Respond na owner's contacts
+async fn book(req_details: Json<BookingDetails>) {
+    let det=req_details.0;
 }
 async fn mult_upload(mut multipart: Multipart) {
     let mut admin_id = String::new();
