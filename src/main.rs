@@ -97,16 +97,10 @@ async fn user_login(user: Json<User>)->Json<Value>{
     let password=user.password;
     let q=format!("SELECT * FROM users WHERE email='{}' AND password='{}'",email,password);
     let rows=g.query(q.as_str(),&[]).await.unwrap();
-    let mut x=Vec::new();
+    let mut x=String::new();
     for row in rows{
-        let email: String = row.get(1);
-        let password: String = row.get(2);
         let id: i32 = row.get(0);
-        let user=User{
-            email,
-            password
-        };
-        x.push(user);
+        x=id.to_string();
     }
     Json(serde_json::to_value(x).unwrap())
 }
