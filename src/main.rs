@@ -47,7 +47,6 @@ async fn main() {
          .route("/car/:owner_id/:car_id/:file_name", get(download_img))
          .route("/buyr", post(process_payment))
          .route("/car/upload/:filename", post(img_upload))
-        .route("/car/book",post(book))
          .route("/car/mult_upload", post(mult_upload))
          .route("/path", post(call_back_url))
          .route("/user/new",post(create_user))
