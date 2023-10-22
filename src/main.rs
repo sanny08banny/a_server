@@ -83,8 +83,13 @@ async fn db_client() -> Client {
 
 
 
-async fn create_user(user:Json<User>)->Json<Value>{
-todo!()
+async fn create_user(user:Json<User>){
+    let g=db_client().await;
+    let user=user.0;
+    let email=user.email;
+    let password=user.password;
+    let q=format!("INSERT INTO users (email,password) VALUES ('{}','{}')",email,password);
+    g.execute(q.as_str(),&[]).await.unwrap();
 }
 async fn user_login(user: Json<User>)->Json<Value>{
 todo!()
