@@ -40,33 +40,31 @@ struct User{
 #[tokio::main]
 async fn main() {
     let addr = "0.0.0.0:4000";
-    // let app = Router::new()
-    //     .route("/cars", get(handler))
-    //     .route("/car_img", get(image_handler))
-    //     .route("/car/book", post(book))
-    //     .route("/car/:owner_id/:car_id/:file_name", get(download_img))
-    //     .route("/buyr", post(process_payment))
-    //     .route("/car/upload/:filename", post(img_upload))
-    //     .route("/car/book",post(book))
-    //     .route("/car/mult_upload", post(mult_upload))
-    //     .route("/path", post(call_back_url))
-    //     .route("user/new",post(create_user))
-    //     .route("user/login",post(user_login))
-    //     .layer(CorsLayer::permissive());
-    // axum::Server::bind(&addr.trim().parse().expect("Invalid address"))
-    //     .serve(app.into_make_service_with_connect_info::<SocketAddr>())
-    //     .await
-    //     .unwrap();
-    let g=db_client().await;
-    println!("{}",g.is_closed());
+     let app = Router::new()
+         .route("/cars", get(handler))
+         .route("/car_img", get(image_handler))
+         .route("/car/book", post(book))
+         .route("/car/:owner_id/:car_id/:file_name", get(download_img))
+         .route("/buyr", post(process_payment))
+         .route("/car/upload/:filename", post(img_upload))
+        .route("/car/book",post(book))
+         .route("/car/mult_upload", post(mult_upload))
+         .route("/path", post(call_back_url))
+         .route("user/new",post(create_user))
+         .route("user/login",post(user_login))
+         .layer(CorsLayer::permissive());
+     axum::Server::bind(&addr.trim().parse().expect("Invalid address"))
+         .serve(app.into_make_service_with_connect_info::<SocketAddr>())
+         .await
+         .unwrap();
 }
 
 async fn db_client() -> Client {
-    let host = "ec2-18-208-145-172.compute-1.amazonaws.com";
+    let host = "localhost";
     let user = "ubuntu";
-    let password = "";
+    let password = "new_password";
     let dbname = "ubuntu";
-    let config_string = format!("host={} user={} password='{}' dbname={}", host, user, password, dbname);
+    let config_string = format!("host={} user={} password={} dbname={}", host, user,password, dbname);
     let (client, monitor) = tokio_postgres::connect(
         config_string.as_str(),
         NoTls,
