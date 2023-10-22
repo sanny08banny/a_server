@@ -32,7 +32,7 @@ struct BookingDetails{
     user_id:String,
     car_id:String
 }
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize,serde::Serialize)]
 struct User{
     email:String,
     password:String
@@ -91,7 +91,24 @@ async fn create_user(user:Json<User>){
     g.execute(q.as_str(),&[]).await.unwrap();
 }
 async fn user_login(user: Json<User>)->Json<Value>{
-todo!()
+    let g=db_client().await;
+    let user=user.0;
+    let email=user.email;
+    let password=user.password;
+    let q=format!("SELECT * FROM users WHERE email='{}' AND password='{}'",email,password);
+    let rows=g.query(q.as_str(),&[]).await.unwrap();
+    let mut x=Vec::new();
+    for row in rows{
+        let email: String = row.get(1);
+        let password: String = row.get(2);
+        let id: i32 = row.get(0);
+        let user=User{
+            email,
+            password
+        };
+        x.push(user);
+    }
+    Json(serde_json::to_value(x).unwrap())
 }
 
 async fn handler() -> Json<Value> {
