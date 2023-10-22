@@ -6,10 +6,11 @@ use axum::{
 };
 use image_server::image_handler;
 use serde_json::Value;
+use tokio_postgres::{Client, NoTls};
 use std::{
     fs::{self, File},
     io::{BufReader, Read},
-    net::SocketAddr,
+    net::SocketAddr, thread,
 };
 use tower_http::cors::CorsLayer;
 mod ecryption_engine;
@@ -31,25 +32,66 @@ struct BookingDetails{
     user_id:String,
     car_id:String
 }
+#[derive(serde::Deserialize)]
+struct User{
+    email:String,
+    password:String
+}
 #[tokio::main]
 async fn main() {
     let addr = "0.0.0.0:4000";
-    let app = Router::new()
-        .route("/cars", get(handler))
-        .route("/car_img", get(image_handler))
-        .route("/car/book", post(book))
-        .route("/car/:owner_id/:car_id/:file_name", get(download_img))
-        .route("/buyr", post(process_payment))
-        .route("/car/upload/:filename", post(img_upload))
-        .route("/car/book",post(book))
-        .route("/car/mult_upload", post(mult_upload))
-        .route("/path", post(call_back_url))
-        .layer(CorsLayer::permissive());
-    axum::Server::bind(&addr.trim().parse().expect("Invalid address"))
-        .serve(app.into_make_service_with_connect_info::<SocketAddr>())
-        .await
-        .unwrap();
+    // let app = Router::new()
+    //     .route("/cars", get(handler))
+    //     .route("/car_img", get(image_handler))
+    //     .route("/car/book", post(book))
+    //     .route("/car/:owner_id/:car_id/:file_name", get(download_img))
+    //     .route("/buyr", post(process_payment))
+    //     .route("/car/upload/:filename", post(img_upload))
+    //     .route("/car/book",post(book))
+    //     .route("/car/mult_upload", post(mult_upload))
+    //     .route("/path", post(call_back_url))
+    //     .route("user/new",post(create_user))
+    //     .route("user/login",post(user_login))
+    //     .layer(CorsLayer::permissive());
+    // axum::Server::bind(&addr.trim().parse().expect("Invalid address"))
+    //     .serve(app.into_make_service_with_connect_info::<SocketAddr>())
+    //     .await
+    //     .unwrap();
+    let g=db_client().await;
+    println!("{}",g.is_closed());
 }
+
+async fn db_client() -> Client {
+    let host = "ec2-18-208-145-172.compute-1.amazonaws.com";
+    let user = "ubuntu";
+    let password = "";
+    let dbname = "ubuntu";
+    let config_string = format!("host={} user={} password='{}' dbname={}", host, user, password, dbname);
+    let (client, monitor) = tokio_postgres::connect(
+        config_string.as_str(),
+        NoTls,
+    )
+    .await
+    .unwrap();
+
+    tokio::spawn(async move {
+        if let Err(e) = monitor.await {
+            eprintln!("Connection error: {}", e);
+        }
+    });
+
+    client
+}
+
+
+
+async fn create_user(user:Json<User>)->Json<Value>{
+todo!()
+}
+async fn user_login(user: Json<User>)->Json<Value>{
+todo!()
+}
+
 async fn handler() -> Json<Value> {
     let y = fs::read_to_string("src/dummy/cars.json").expect("json file not found");
     let x: Value = serde_json::from_str(&y).expect("invalid json");
@@ -95,6 +137,7 @@ async fn process_payment(payment_details: Json<PaymentDetails>) {
 async fn book(req_details: Json<BookingDetails>) {
     let det=req_details.0;
 }
+
 async fn mult_upload(mut multipart: Multipart) {
     let mut admin_id = String::new();
     let mut car_id = String::new();
