@@ -50,8 +50,8 @@ async fn main() {
         .route("/car/book",post(book))
          .route("/car/mult_upload", post(mult_upload))
          .route("/path", post(call_back_url))
-         .route("user/new",post(create_user))
-         .route("user/login",post(user_login))
+         .route("/user/new",post(create_user))
+         .route("/user/login",post(user_login))
          .layer(CorsLayer::permissive());
      axum::Server::bind(&addr.trim().parse().expect("Invalid address"))
          .serve(app.into_make_service_with_connect_info::<SocketAddr>())
