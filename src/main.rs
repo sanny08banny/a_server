@@ -160,6 +160,7 @@ async fn mult_upload(mut multipart: Multipart) {
     let mut car_id = String::new();
     let mut img_path = String::new();
     let mut index = 0;
+    let g=db_client().await;
     while let Some(field) = multipart.next_field().await.unwrap() {
         let name = field.name().unwrap().to_string();
         match name.as_str() {
@@ -167,7 +168,6 @@ async fn mult_upload(mut multipart: Multipart) {
                 admin_id = field.text().await.unwrap();
             },
             "car_id"=>{
-                let g=db_client().await;
                 let q=format!("INSERT INTO cars (owner_id,car_id) VALUES ('{}','{}')",admin_id,car_id);
                 g.execute(q.as_str(),&[]).await.unwrap();
                 car_id = field.text().await.unwrap();
@@ -179,13 +179,34 @@ async fn mult_upload(mut multipart: Multipart) {
                     }
                 }    
             },
-            "model"=>{},
-            "location"=>{},
-            "description"=>{},
-            "daily_price"=>{},
-            "hourly_price"=>{},
-            "daily_down_payment"=>{},
-            "hourly_down_payment"=>{},
+            "model"=>{
+                let q=format!("UPDATE cars SET model = '{}' WHERE owner_id='{}' AND car_id='{}'",field.text().await.unwrap(),admin_id,car_id);
+                g.execute(q.as_str(),&[]).await.unwrap();
+            },
+            "location"=>{
+                let q=format!("UPDATE cars SET location = '{}' WHERE owner_id='{}' AND car_id='{}'",field.text().await.unwrap(),admin_id,car_id);
+                g.execute(q.as_str(),&[]).await.unwrap();
+            },
+            "description"=>{
+                let q=format!("UPDATE cars SET description = '{}' WHERE owner_id='{}' AND car_id='{}'",field.text().await.unwrap(),admin_id,car_id);
+                g.execute(q.as_str(),&[]).await.unwrap();
+            },
+            "daily_price"=>{
+                let q=format!("UPDATE cars SET daily_amount = '{}' WHERE owner_id='{}' AND car_id='{}'",field.text().await.unwrap(),admin_id,car_id);
+                g.execute(q.as_str(),&[]).await.unwrap();
+            },
+            "hourly_price"=>{
+                let q=format!("UPDATE cars SET hourly_amount = '{}' WHERE owner_id='{}' AND car_id='{}'",field.text().await.unwrap(),admin_id,car_id);
+                g.execute(q.as_str(),&[]).await.unwrap();
+            },
+            "daily_down_payment"=>{
+                let q=format!("UPDATE cars SET daily_downpayment_amt = '{}' WHERE owner_id='{}' AND car_id='{}'",field.text().await.unwrap(),admin_id,car_id);
+                g.execute(q.as_str(),&[]).await.unwrap();
+            },
+            "hourly_down_payment"=>{
+                let q=format!("UPDATE cars SET hourly_downpayment_amt = '{}' WHERE owner_id='{}' AND car_id='{}'",field.text().await.unwrap(),admin_id,car_id);
+                g.execute(q.as_str(),&[]).await.unwrap();
+            },
             _=> {
                 let mut img_file_format = match field.content_type() {
                     Some(x) => x,
@@ -206,7 +227,6 @@ async fn mult_upload(mut multipart: Multipart) {
                         println!("Failed to save image: {}", e)
                     }
                 }
-                let g=db_client().await;
                 let q=format!("UPDATE cars SET car_images = array_append(car_images, '{}') WHERE owner_id='{}' AND car_id='{}'",img_name,admin_id,car_id);
                 g.execute(q.as_str(),&[]).await.unwrap();
                 println!("Length of `{}` ", img_path);
