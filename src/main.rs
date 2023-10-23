@@ -299,10 +299,12 @@ async fn mult_upload(mut multipart: Multipart) {
     }
     let images = format!("ARRAY[{}]", images.join(","));
     println!("{}", images);
+    // convert the prices to f64
+    let hourly_price: f64 = hourly_price.parse().unwrap();
     let q = format!(
         "INSERT INTO car (car_id, car_images, model, owner_id, location, description, hourly_amount, hourly_downpayment_amt, daily_amount, daily_downpayment_amt, available)
         VALUES
-          ({}, {}, 'CX-5', 'CCCAMERA', 'Nairobi', '', 500.00, 500.00, 5000.00, 1000.00, true)",car_id,images
+          ('{}', {}, 'CX-5', 'CCCAMERA', 'Nairobi', '', {}, 500.00, 5000.00, 1000.00, true)",car_id,images,hourly_price
     );
     g.execute(q.as_str(), &[]).await.unwrap();
 
