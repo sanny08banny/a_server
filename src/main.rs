@@ -136,7 +136,7 @@ async fn user_login(user: Json<User>) -> Result<Json<Value>, StatusCode> {
 
 async fn handler() -> Json<Vec<Car>> {
     let g = db_client().await;
-    let q = "SELECT * FROM cars";
+    let q = "SELECT * FROM car";
     let rows = g.query(q, &[]).await.unwrap();
     let mut x = Vec::new();
     for row in rows {
