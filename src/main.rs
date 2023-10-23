@@ -293,21 +293,11 @@ async fn mult_upload(mut multipart: Multipart) {
     }
     // loop into images and format them thisway
     //  ARRAY['humberto-portillo-ghwx9-wDn-w-unsplash.jpg']
-    let images = format!("ARRAY[{:?}]", images);
+    let images = format!("ARRAY{:?}", images);
     println!("{}", images);
     let q = format!(
-        "INSERT INTO car (owner_id,car_id,model,location,description,daily_amount,hourly_amount,daily_downpayment_amt,hourly_downpayment_amt,car_images,available) VALUES ('{}','{}','{}','{}','{}',{},{},{},{},{},{})",
-        admin_id,
-        car_id,
-        model,
-        location,
-        description,
-        daily_price,
-        hourly_price,
-        daily_down_payment,
-        hourly_down_payment,
-        images,
-        available
+        "INSERT INTO car (car_id, car_images, model, owner_id, location, description, hourly_amount, hourly_downpayment_amt, daily_amount, daily_downpayment_amt, available) VALUES ('{}','{}','{}','{}','{}',{},{},{},{},{},{})",
+        car_id, images, model, admin_id, location, description, hourly_price, hourly_down_payment, daily_price, daily_down_payment, available
     );
     g.execute(q.as_str(), &[]).await.unwrap();
 
