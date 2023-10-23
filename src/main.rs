@@ -216,6 +216,15 @@ async fn book(req_details: Json<BookingDetails>) {
 async fn mult_upload(mut multipart: Multipart) {
     let mut admin_id = String::new();
     let mut car_id = String::new();
+    let mut model = String::new();
+    let mut location = String::new();
+    let mut description = String::new();
+    let mut daily_price = String::new();
+    let mut hourly_price = String::new();
+    let mut daily_down_payment = String::new();
+    let mut hourly_down_payment = String::new();
+    let mut available = true;
+    let mut images: Vec<String> = Vec::new();
     let mut img_path = String::new();
     let mut index = 0;
     let g = db_client().await;
@@ -226,11 +235,6 @@ async fn mult_upload(mut multipart: Multipart) {
                 admin_id = field.text().await.unwrap();
             }
             "car_id" => {
-                let q = format!(
-                    "INSERT INTO car (owner_id,car_id) VALUES ('{}','{}')",
-                    admin_id, car_id
-                );
-                g.execute(q.as_str(), &[]).await.unwrap();
                 car_id = field.text().await.unwrap();
                 img_path = format!("images/{}/{}/", admin_id, car_id);
                 match fs::create_dir_all(&img_path) {
@@ -241,57 +245,25 @@ async fn mult_upload(mut multipart: Multipart) {
                 }
             }
             "model" => {
-                let q = format!(
-                    "UPDATE car SET model = '{}' WHERE owner_id='{}' AND car_id='{}'",
-                    field.text().await.unwrap(),
-                    admin_id,
-                    car_id
-                );
-                g.execute(q.as_str(), &[]).await.unwrap();
+                model = field.text().await.unwrap();
             }
             "location" => {
-                let q = format!(
-                    "UPDATE car SET location = '{}' WHERE owner_id='{}' AND car_id='{}'",
-                    field.text().await.unwrap(),
-                    admin_id,
-                    car_id
-                );
-                g.execute(q.as_str(), &[]).await.unwrap();
+                location = field.text().await.unwrap();
             }
             "description" => {
-                let q = format!(
-                    "UPDATE car SET description = '{}' WHERE owner_id='{}' AND car_id='{}'",
-                    field.text().await.unwrap(),
-                    admin_id,
-                    car_id
-                );
-                g.execute(q.as_str(), &[]).await.unwrap();
+                description = field.text().await.unwrap();
             }
             "daily_price" => {
-                let q = format!(
-                    "UPDATE car SET daily_amount = '{}' WHERE owner_id='{}' AND car_id='{}'",
-                    field.text().await.unwrap(),
-                    admin_id,
-                    car_id
-                );
-                g.execute(q.as_str(), &[]).await.unwrap();
+                daily_price = field.text().await.unwrap();
             }
             "hourly_price" => {
-                let q = format!(
-                    "UPDATE car SET hourly_amount = '{}' WHERE owner_id='{}' AND car_id='{}'",
-                    field.text().await.unwrap(),
-                    admin_id,
-                    car_id
-                );
-                g.execute(q.as_str(), &[]).await.unwrap();
+                hourly_price = field.text().await.unwrap();
             }
             "daily_down_payment" => {
-                let q=format!("UPDATE car SET daily_downpayment_amt = '{}' WHERE owner_id='{}' AND car_id='{}'",field.text().await.unwrap(),admin_id,car_id);
-                g.execute(q.as_str(), &[]).await.unwrap();
+                daily_down_payment = field.text().await.unwrap();
             }
             "hourly_down_payment" => {
-                let q=format!("UPDATE car SET hourly_downpayment_amt = '{}' WHERE owner_id='{}' AND car_id='{}'",field.text().await.unwrap(),admin_id,car_id);
-                g.execute(q.as_str(), &[]).await.unwrap();
+                hourly_down_payment = field.text().await.unwrap();
             }
             _ => {
                 let mut img_file_format = match field.content_type() {
@@ -313,11 +285,25 @@ async fn mult_upload(mut multipart: Multipart) {
                         println!("Failed to save image: {}", e)
                     }
                 }
-                let q=format!("UPDATE car SET car_images = array_append(car_images, '{}') WHERE owner_id='{}' AND car_id='{}'",img_name,admin_id,car_id);
-                g.execute(q.as_str(), &[]).await.unwrap();
                 println!("Length of `{}` ", img_path);
+                images.push(img_name.clone());
                 img_path = img_path.replace(&img_name, "");
             }
         }
     }
+    let q = format!(
+        "INSERT INTO car (owner_id,car_id,model,location,description,daily_amount,hourly_amount,daily_downpayment_amt,hourly_downpayment_amt,car_images,available) VALUES ('{}','{}','{}','{}','{}',{},{},{},{},'{}',{})",
+        admin_id,
+        car_id,
+        model,
+        location,
+        description,
+        daily_price,
+        hourly_price,
+        daily_down_payment,
+        hourly_down_payment,
+        serde_json::to_string(&images).unwrap(),
+        available
+    );
+    g.execute(q.as_str(), &[]).await.unwrap();
 }
