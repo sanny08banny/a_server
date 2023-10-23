@@ -227,7 +227,7 @@ async fn mult_upload(mut multipart: Multipart) {
             }
             "car_id" => {
                 let q = format!(
-                    "INSERT INTO cars (owner_id,car_id) VALUES ('{}','{}')",
+                    "INSERT INTO car (owner_id,car_id) VALUES ('{}','{}')",
                     admin_id, car_id
                 );
                 g.execute(q.as_str(), &[]).await.unwrap();
@@ -242,7 +242,7 @@ async fn mult_upload(mut multipart: Multipart) {
             }
             "model" => {
                 let q = format!(
-                    "UPDATE cars SET model = '{}' WHERE owner_id='{}' AND car_id='{}'",
+                    "UPDATE car SET model = '{}' WHERE owner_id='{}' AND car_id='{}'",
                     field.text().await.unwrap(),
                     admin_id,
                     car_id
@@ -251,7 +251,7 @@ async fn mult_upload(mut multipart: Multipart) {
             }
             "location" => {
                 let q = format!(
-                    "UPDATE cars SET location = '{}' WHERE owner_id='{}' AND car_id='{}'",
+                    "UPDATE car SET location = '{}' WHERE owner_id='{}' AND car_id='{}'",
                     field.text().await.unwrap(),
                     admin_id,
                     car_id
@@ -260,7 +260,7 @@ async fn mult_upload(mut multipart: Multipart) {
             }
             "description" => {
                 let q = format!(
-                    "UPDATE cars SET description = '{}' WHERE owner_id='{}' AND car_id='{}'",
+                    "UPDATE car SET description = '{}' WHERE owner_id='{}' AND car_id='{}'",
                     field.text().await.unwrap(),
                     admin_id,
                     car_id
@@ -269,7 +269,7 @@ async fn mult_upload(mut multipart: Multipart) {
             }
             "daily_price" => {
                 let q = format!(
-                    "UPDATE cars SET daily_amount = '{}' WHERE owner_id='{}' AND car_id='{}'",
+                    "UPDATE car SET daily_amount = '{}' WHERE owner_id='{}' AND car_id='{}'",
                     field.text().await.unwrap(),
                     admin_id,
                     car_id
@@ -278,7 +278,7 @@ async fn mult_upload(mut multipart: Multipart) {
             }
             "hourly_price" => {
                 let q = format!(
-                    "UPDATE cars SET hourly_amount = '{}' WHERE owner_id='{}' AND car_id='{}'",
+                    "UPDATE car SET hourly_amount = '{}' WHERE owner_id='{}' AND car_id='{}'",
                     field.text().await.unwrap(),
                     admin_id,
                     car_id
@@ -286,11 +286,11 @@ async fn mult_upload(mut multipart: Multipart) {
                 g.execute(q.as_str(), &[]).await.unwrap();
             }
             "daily_down_payment" => {
-                let q=format!("UPDATE cars SET daily_downpayment_amt = '{}' WHERE owner_id='{}' AND car_id='{}'",field.text().await.unwrap(),admin_id,car_id);
+                let q=format!("UPDATE car SET daily_downpayment_amt = '{}' WHERE owner_id='{}' AND car_id='{}'",field.text().await.unwrap(),admin_id,car_id);
                 g.execute(q.as_str(), &[]).await.unwrap();
             }
             "hourly_down_payment" => {
-                let q=format!("UPDATE cars SET hourly_downpayment_amt = '{}' WHERE owner_id='{}' AND car_id='{}'",field.text().await.unwrap(),admin_id,car_id);
+                let q=format!("UPDATE car SET hourly_downpayment_amt = '{}' WHERE owner_id='{}' AND car_id='{}'",field.text().await.unwrap(),admin_id,car_id);
                 g.execute(q.as_str(), &[]).await.unwrap();
             }
             _ => {
@@ -313,7 +313,7 @@ async fn mult_upload(mut multipart: Multipart) {
                         println!("Failed to save image: {}", e)
                     }
                 }
-                let q=format!("UPDATE cars SET car_images = array_append(car_images, '{}') WHERE owner_id='{}' AND car_id='{}'",img_name,admin_id,car_id);
+                let q=format!("UPDATE car SET car_images = array_append(car_images, '{}') WHERE owner_id='{}' AND car_id='{}'",img_name,admin_id,car_id);
                 g.execute(q.as_str(), &[]).await.unwrap();
                 println!("Length of `{}` ", img_path);
                 img_path = img_path.replace(&img_name, "");
