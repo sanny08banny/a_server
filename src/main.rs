@@ -4,14 +4,16 @@ use axum::{
     response::Response,
     routing::{get, post, Router},
 };
+use hyper::StatusCode;
 use image_server::image_handler;
 use serde_json::Value;
-use tokio_postgres::{Client, NoTls};
 use std::{
     fs::{self, File},
     io::{BufReader, Read},
-    net::SocketAddr, thread,
+    net::SocketAddr,
+    thread,
 };
+use tokio_postgres::{Client, NoTls};
 use tower_http::cors::CorsLayer;
 mod ecryption_engine;
 mod image_server;
@@ -28,34 +30,34 @@ struct PaymentDetails {
     description: String,
 }
 #[derive(serde::Deserialize)]
-struct BookingDetails{
-    user_id:String,
-    car_id:String
+struct BookingDetails {
+    user_id: String,
+    car_id: String,
 }
-#[derive(serde::Deserialize,serde::Serialize)]
-struct User{
-    email:String,
-    password:String
+#[derive(serde::Deserialize, serde::Serialize)]
+struct User {
+    email: String,
+    password: String,
 }
 #[tokio::main]
 async fn main() {
     let addr = "0.0.0.0:4000";
-     let app = Router::new()
-         .route("/cars", get(handler))
-         .route("/car_img", get(image_handler))
-         .route("/car/book", post(book))
-         .route("/car/:owner_id/:car_id/:file_name", get(download_img))
-         .route("/buyr", post(process_payment))
-         .route("/car/upload/:filename", post(img_upload))
-         .route("/car/mult_upload", post(mult_upload))
-         .route("/path", post(call_back_url))
-         .route("/user/new",post(create_user))
-         .route("/user/login",post(user_login))
-         .layer(CorsLayer::permissive());
-     axum::Server::bind(&addr.trim().parse().expect("Invalid address"))
-         .serve(app.into_make_service_with_connect_info::<SocketAddr>())
-         .await
-         .unwrap();
+    let app = Router::new()
+        .route("/cars", get(handler))
+        .route("/car_img", get(image_handler))
+        .route("/car/book", post(book))
+        .route("/car/:owner_id/:car_id/:file_name", get(download_img))
+        .route("/buyr", post(process_payment))
+        .route("/car/upload/:filename", post(img_upload))
+        .route("/car/mult_upload", post(mult_upload))
+        .route("/path", post(call_back_url))
+        .route("/user/new", post(create_user))
+        .route("/user/login", post(user_login))
+        .layer(CorsLayer::permissive());
+    axum::Server::bind(&addr.trim().parse().expect("Invalid address"))
+        .serve(app.into_make_service_with_connect_info::<SocketAddr>())
+        .await
+        .unwrap();
 }
 
 async fn db_client() -> Client {
@@ -63,13 +65,13 @@ async fn db_client() -> Client {
     let user = "ubuntu";
     let password = "new_password";
     let dbname = "ubuntu";
-    let config_string = format!("host={} user={} password={} dbname={}", host, user,password, dbname);
-    let (client, monitor) = tokio_postgres::connect(
-        config_string.as_str(),
-        NoTls,
-    )
-    .await
-    .unwrap();
+    let config_string = format!(
+        "host={} user={} password={} dbname={}",
+        host, user, password, dbname
+    );
+    let (client, monitor) = tokio_postgres::connect(config_string.as_str(), NoTls)
+        .await
+        .unwrap();
 
     tokio::spawn(async move {
         if let Err(e) = monitor.await {
@@ -80,29 +82,36 @@ async fn db_client() -> Client {
     client
 }
 
-
-
-async fn create_user(user:Json<User>){
-    let g=db_client().await;
-    let user=user.0;
-    let email=user.email;
-    let password=user.password;
-    let q=format!("INSERT INTO users (email,password) VALUES ('{}','{}')",email,password);
-    g.execute(q.as_str(),&[]).await.unwrap();
+async fn create_user(user: Json<User>) {
+    let g = db_client().await;
+    let user = user.0;
+    let email = user.email;
+    let password = user.password;
+    let q = format!(
+        "INSERT INTO users (email,password) VALUES ('{}','{}')",
+        email, password
+    );
+    g.execute(q.as_str(), &[]).await.unwrap();
 }
-async fn user_login(user: Json<User>)->Json<Value>{
-    let g=db_client().await;
-    let user=user.0;
-    let email=user.email;
-    let password=user.password;
-    let q=format!("SELECT * FROM users WHERE email='{}' AND password='{}'",email,password);
-    let rows=g.query(q.as_str(),&[]).await.unwrap();
-    let mut x=String::new();
-    for row in rows{
+async fn user_login(user: Json<User>) -> Result<Json<Value>, StatusCode> {
+    let g = db_client().await;
+    let user = user.0;
+    let email = user.email;
+    let password = user.password;
+    let q = format!(
+        "SELECT * FROM users WHERE email='{}' AND password='{}'",
+        email, password
+    );
+    let rows = g.query(q.as_str(), &[]).await.unwrap();
+    let mut x = String::new();
+    for row in rows {
         let id: i32 = row.get(0);
-        x=id.to_string();
+        x = id.to_string();
     }
-    Json(serde_json::to_value(x).unwrap())
+    if x.is_empty() {
+        return Err(StatusCode::UNAUTHORIZED);
+    }
+    Ok(Json(serde_json::to_value(x).unwrap()))
 }
 
 async fn handler() -> Json<Value> {
@@ -110,16 +119,17 @@ async fn handler() -> Json<Value> {
     let x: Value = serde_json::from_str(&y).expect("invalid json");
     Json(x)
 }
+
 async fn call_back_url(j: Json<Value>) {
     println!("Saf says:: {}", j.0);
 }
-async fn download_img(params:Path<Vec<String>>) -> Response<Body> {
-    let mut o=params.0.iter();
-    let owner_id=o.next().unwrap();
-    let car_id=o.next().unwrap();
-    let file_name=o.next().unwrap();
-    let p= format!("images/{}/{}/{}",owner_id,car_id,file_name);
-    println!("{}",p);
+async fn download_img(params: Path<Vec<String>>) -> Response<Body> {
+    let mut o = params.0.iter();
+    let owner_id = o.next().unwrap();
+    let car_id = o.next().unwrap();
+    let file_name = o.next().unwrap();
+    let p = format!("images/{}/{}/{}", owner_id, car_id, file_name);
+    println!("{}", p);
     let h = File::open(p.clone()).expect("file not found");
     let mut buf_reader = BufReader::new(h);
     let mut contents = Vec::new();
@@ -148,19 +158,22 @@ async fn process_payment(payment_details: Json<PaymentDetails>) {
 }
 
 async fn book(req_details: Json<BookingDetails>) {
-    let det=req_details.0;
+    let det = req_details.0;
 }
 
 async fn mult_upload(mut multipart: Multipart) {
     let mut admin_id = String::new();
     let mut car_id = String::new();
     let mut img_path = String::new();
+    let mut index = 0;
     while let Some(field) = multipart.next_field().await.unwrap() {
         let name = field.name().unwrap().to_string();
-        println!("type {:?}", field.content_type());
         if name == "admin_id" {
             admin_id = field.text().await.unwrap();
         } else if name == "car_id" {
+            let g=db_client().await;
+            let q=format!("INSERT INTO cars (owner_id,car_id) VALUES ('{}','{}')",admin_id,car_id);
+            g.execute(q.as_str(),&[]).await.unwrap();
             car_id = field.text().await.unwrap();
             img_path = format!("images/{}/{}/", admin_id, car_id);
             match fs::create_dir_all(&img_path) {
@@ -170,15 +183,28 @@ async fn mult_upload(mut multipart: Multipart) {
                 }
             }
         } else {
+            let mut img_file_format = match field.content_type() {
+                Some(x) => x,
+                None => "image/png",
+            }
+            .to_owned();
+            // remove image/ from the content type
+            img_file_format = img_file_format.replace("image/", "");
+            let img_name = format!("img_{}.{}", index, img_file_format);
+            println!("file format {}", img_file_format);
             let img = image::load_from_memory(&field.bytes().await.unwrap()).unwrap();
-            
-            img_path.push_str(&name);
+            img_path.push_str(&img_name);
             match img.save(&img_path) {
-                Ok(_) => {}
+                Ok(_) => {
+                    index += 1;
+                }
                 Err(e) => {
                     println!("Failed to save image: {}", e)
                 }
             }
+            let g=db_client().await;
+            let q=format!("UPDATE cars SET car_images = array_append(car_images, '{}') WHERE owner_id='{}' AND car_id='{}'",img_name,admin_id,car_id);
+            g.execute(q.as_str(),&[]).await.unwrap();
             println!("Length of `{}` ", img_path);
             img_path = img_path.replace(&name, "");
         }
