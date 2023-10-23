@@ -140,17 +140,17 @@ async fn handler() -> Json<Vec<Car>> {
     let rows = g.query(q, &[]).await.unwrap();
     let mut x = Vec::new();
     for row in rows {
-        let owner_id: String = row.get(1);
-        let car_id: String = row.get(3);
-        let model: String = row.get(2);
-        let location: String = row.get(4);
-        let description: String = row.get(5);
-        let daily_amount: f32 = row.get(8);
-        let hourly_amount: f32 = row.get(6);
-        let daily_downpayment_amt: f32 = row.get(9);
-        let hourly_downpayment_amt: f32 = row.get(7);
-        let car_images: Vec<String> = row.get(1);
-        let available: bool = row.get(10);
+        let owner_id: String = row.get::<_, String>(1);
+        let car_id: String = row.get::<_, String>(3);
+        let model: String = row.get::<_, String>(2);
+        let location: String = row.get::<_, String>(4);
+        let description: String = row.get::<_, String>(5);
+        let daily_amount: f32 = row.get::<_, f32>(8);
+        let hourly_amount: f32 = row.get::<_, f32>(6);
+        let daily_downpayment_amt: f32 = row.get::<_, f32>(9);
+        let hourly_downpayment_amt: f32 = row.get::<_, f32>(7);
+        let car_images: Vec<String> = row.get::<_, Vec<String>>(1);
+        let available: bool = row.get::<_,bool>(10);
         let car = Car {
             car_images,
             model,
