@@ -6,7 +6,7 @@ use axum::{
 };
 use hyper::StatusCode;
 use image_server::image_handler;
-use serde_json::Value;
+use serde_json::{json, Value};
 use std::{
     fs::{self, File},
     io::{BufReader, Read},
@@ -37,6 +37,27 @@ struct BookingDetails {
 struct User {
     email: String,
     password: String,
+}
+#[derive(serde::Deserialize, serde::Serialize)]
+struct Car {
+    car_images: Vec<String>,
+    model: String,
+    car_id: String,
+    owner_id: String,
+    location: String,
+    description: String,
+    pricing: Pricing,
+    available: bool,
+}
+#[derive(serde::Deserialize, serde::Serialize)]
+struct Pricing {
+    hourly: Amount,
+    daily: Amount,
+}
+#[derive(serde::Deserialize, serde::Serialize)]
+struct Amount {
+    amount: f32,
+    downpayment_amt: f32,
 }
 #[tokio::main]
 async fn main() {
@@ -113,9 +134,46 @@ async fn user_login(user: Json<User>) -> Result<Json<Value>, StatusCode> {
     Ok(Json(serde_json::to_value(x).unwrap()))
 }
 
-async fn handler() -> Json<Value> {
-    let y = fs::read_to_string("src/dummy/cars.json").expect("json file not found");
-    let x: Value = serde_json::from_str(&y).expect("invalid json");
+async fn handler() -> Json<Vec<Car>> {
+    let g = db_client().await;
+    let q = "SELECT * FROM cars";
+    let rows = g.query(q, &[]).await.unwrap();
+    let mut x = Vec::new();
+    for row in rows {
+        let owner_id: String = row.get(1);
+        let car_id: String = row.get(3);
+        let model: String = row.get(2);
+        let location: String = row.get(4);
+        let description: String = row.get(5);
+        let daily_amount: f32 = row.get(8);
+        let hourly_amount: f32 = row.get(6);
+        let daily_downpayment_amt: f32 = row.get(9);
+        let hourly_downpayment_amt: f32 = row.get(7);
+        let car_images: Vec<String> = row.get(1);
+        let available: bool = row.get(10);
+        let car = Car {
+            car_images,
+            model,
+            car_id,
+            owner_id,
+            location,
+            description,
+            pricing: Pricing {
+                hourly: Amount {
+                    amount: hourly_amount,
+                    downpayment_amt: hourly_downpayment_amt,
+                },
+                daily: Amount {
+                    amount: daily_amount,
+                    downpayment_amt: daily_downpayment_amt,
+                },
+            },
+            available,
+        };
+        x.push(car);
+    }
+    // let y = fs::read_to_string("src/dummy/cars.json").expect("json file not found");
+    // let x: Value = serde_json::from_str(&y).expect("invalid json");
     Json(x)
 }
 
@@ -160,16 +218,19 @@ async fn mult_upload(mut multipart: Multipart) {
     let mut car_id = String::new();
     let mut img_path = String::new();
     let mut index = 0;
-    let g=db_client().await;
+    let g = db_client().await;
     while let Some(field) = multipart.next_field().await.unwrap() {
         let name = field.name().unwrap().to_string();
         match name.as_str() {
             "admin_id" => {
                 admin_id = field.text().await.unwrap();
-            },
-            "car_id"=>{
-                let q=format!("INSERT INTO cars (owner_id,car_id) VALUES ('{}','{}')",admin_id,car_id);
-                g.execute(q.as_str(),&[]).await.unwrap();
+            }
+            "car_id" => {
+                let q = format!(
+                    "INSERT INTO cars (owner_id,car_id) VALUES ('{}','{}')",
+                    admin_id, car_id
+                );
+                g.execute(q.as_str(), &[]).await.unwrap();
                 car_id = field.text().await.unwrap();
                 img_path = format!("images/{}/{}/", admin_id, car_id);
                 match fs::create_dir_all(&img_path) {
@@ -177,37 +238,62 @@ async fn mult_upload(mut multipart: Multipart) {
                     Err(e) => {
                         println!("failed to create directories {}", e)
                     }
-                }    
-            },
-            "model"=>{
-                let q=format!("UPDATE cars SET model = '{}' WHERE owner_id='{}' AND car_id='{}'",field.text().await.unwrap(),admin_id,car_id);
-                g.execute(q.as_str(),&[]).await.unwrap();
-            },
-            "location"=>{
-                let q=format!("UPDATE cars SET location = '{}' WHERE owner_id='{}' AND car_id='{}'",field.text().await.unwrap(),admin_id,car_id);
-                g.execute(q.as_str(),&[]).await.unwrap();
-            },
-            "description"=>{
-                let q=format!("UPDATE cars SET description = '{}' WHERE owner_id='{}' AND car_id='{}'",field.text().await.unwrap(),admin_id,car_id);
-                g.execute(q.as_str(),&[]).await.unwrap();
-            },
-            "daily_price"=>{
-                let q=format!("UPDATE cars SET daily_amount = '{}' WHERE owner_id='{}' AND car_id='{}'",field.text().await.unwrap(),admin_id,car_id);
-                g.execute(q.as_str(),&[]).await.unwrap();
-            },
-            "hourly_price"=>{
-                let q=format!("UPDATE cars SET hourly_amount = '{}' WHERE owner_id='{}' AND car_id='{}'",field.text().await.unwrap(),admin_id,car_id);
-                g.execute(q.as_str(),&[]).await.unwrap();
-            },
-            "daily_down_payment"=>{
+                }
+            }
+            "model" => {
+                let q = format!(
+                    "UPDATE cars SET model = '{}' WHERE owner_id='{}' AND car_id='{}'",
+                    field.text().await.unwrap(),
+                    admin_id,
+                    car_id
+                );
+                g.execute(q.as_str(), &[]).await.unwrap();
+            }
+            "location" => {
+                let q = format!(
+                    "UPDATE cars SET location = '{}' WHERE owner_id='{}' AND car_id='{}'",
+                    field.text().await.unwrap(),
+                    admin_id,
+                    car_id
+                );
+                g.execute(q.as_str(), &[]).await.unwrap();
+            }
+            "description" => {
+                let q = format!(
+                    "UPDATE cars SET description = '{}' WHERE owner_id='{}' AND car_id='{}'",
+                    field.text().await.unwrap(),
+                    admin_id,
+                    car_id
+                );
+                g.execute(q.as_str(), &[]).await.unwrap();
+            }
+            "daily_price" => {
+                let q = format!(
+                    "UPDATE cars SET daily_amount = '{}' WHERE owner_id='{}' AND car_id='{}'",
+                    field.text().await.unwrap(),
+                    admin_id,
+                    car_id
+                );
+                g.execute(q.as_str(), &[]).await.unwrap();
+            }
+            "hourly_price" => {
+                let q = format!(
+                    "UPDATE cars SET hourly_amount = '{}' WHERE owner_id='{}' AND car_id='{}'",
+                    field.text().await.unwrap(),
+                    admin_id,
+                    car_id
+                );
+                g.execute(q.as_str(), &[]).await.unwrap();
+            }
+            "daily_down_payment" => {
                 let q=format!("UPDATE cars SET daily_downpayment_amt = '{}' WHERE owner_id='{}' AND car_id='{}'",field.text().await.unwrap(),admin_id,car_id);
-                g.execute(q.as_str(),&[]).await.unwrap();
-            },
-            "hourly_down_payment"=>{
+                g.execute(q.as_str(), &[]).await.unwrap();
+            }
+            "hourly_down_payment" => {
                 let q=format!("UPDATE cars SET hourly_downpayment_amt = '{}' WHERE owner_id='{}' AND car_id='{}'",field.text().await.unwrap(),admin_id,car_id);
-                g.execute(q.as_str(),&[]).await.unwrap();
-            },
-            _=> {
+                g.execute(q.as_str(), &[]).await.unwrap();
+            }
+            _ => {
                 let mut img_file_format = match field.content_type() {
                     Some(x) => x,
                     None => "image/png",
@@ -228,10 +314,10 @@ async fn mult_upload(mut multipart: Multipart) {
                     }
                 }
                 let q=format!("UPDATE cars SET car_images = array_append(car_images, '{}') WHERE owner_id='{}' AND car_id='{}'",img_name,admin_id,car_id);
-                g.execute(q.as_str(),&[]).await.unwrap();
+                g.execute(q.as_str(), &[]).await.unwrap();
                 println!("Length of `{}` ", img_path);
-                img_path = img_path.replace(&img_name, "");    
-            },
+                img_path = img_path.replace(&img_name, "");
+            }
         }
     }
 }
