@@ -140,17 +140,17 @@ async fn handler() -> Json<Vec<Car>> {
     let rows = g.query(q, &[]).await.unwrap();
     let mut x = Vec::new();
     for row in rows {
-        let owner_id: String = row.get::<_, String>(1);
-        let car_id: String = row.get::<_, String>(3);
-        let model: String = row.get::<_, String>(2);
-        let location: String = row.get::<_, String>(4);
-        let description: String = row.get::<_, String>(5);
-        let daily_amount: f32 = row.get::<_, f32>(8);
-        let hourly_amount: f32 = row.get::<_, f32>(6);
-        let daily_downpayment_amt: f32 = row.get::<_, f32>(9);
-        let hourly_downpayment_amt: f32 = row.get::<_, f32>(7);
-        let car_images: Vec<String> = row.get::<_, Vec<String>>(1);
-        let available: bool = row.get::<_,bool>(10);
+        let owner_id: String = row.get::<_, String>("owner_id");
+        let car_id: String = row.get::<_, String>("car_id");
+        let model: String = row.get::<_, String>("model");
+        let location: String = row.get::<_, String>("location");
+        let description: String = row.get::<_, String>("description");
+        let daily_amount: f32 = row.get::<_, f32>("daily_amount");
+        let hourly_amount: f32 = row.get::<_, f32>("hourly_amount");
+        let daily_downpayment_amt: f32 = row.get::<_, f32>("daily_downpayment_amt");
+        let hourly_downpayment_amt: f32 = row.get::<_, f32>("hourly_downpayment_amt");
+        let car_images: Vec<String> = row.get::<_, Vec<String>>("car_images");
+        let available: bool = row.get::<_,bool>("available");
         let car = Car {
             car_images,
             model,
