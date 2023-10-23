@@ -265,6 +265,9 @@ async fn mult_upload(mut multipart: Multipart) {
             "hourly_down_payment" => {
                 hourly_down_payment = field.text().await.unwrap();
             }
+            "available" => {
+                available = field.text().await.unwrap().parse().unwrap();
+            }
             _ => {
                 let mut img_file_format = match field.content_type() {
                     Some(x) => x,
@@ -301,10 +304,13 @@ async fn mult_upload(mut multipart: Multipart) {
     println!("{}", images);
     // convert the prices to f64
     let hourly_price: f64 = hourly_price.parse().unwrap();
+    let daily_price: f64 = daily_price.parse().unwrap();
+    let hourly_down_payment: f64 = hourly_down_payment.parse().unwrap();
+    let daily_down_payment: f64 = daily_down_payment.parse().unwrap();
     let q = format!(
         "INSERT INTO car (car_id, car_images, model, owner_id, location, description, hourly_amount, hourly_downpayment_amt, daily_amount, daily_downpayment_amt, available)
         VALUES
-          ('{}', {}, 'CX-5', 'CCCAMERA', 'Nairobi', '', {}, 500.00, 5000.00, 1000.00, true)",car_id,images,hourly_price
+          ('{}', {}, '{}', '{}', '{}', '{}', {}, {}, {}, {}, {})",car_id,images,model,admin_id,location,description,hourly_price,hourly_down_payment,daily_price,daily_down_payment,available
     );
     g.execute(q.as_str(), &[]).await.unwrap();
 
