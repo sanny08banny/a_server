@@ -11,7 +11,6 @@ use std::{
     fs::{self, File},
     io::{BufReader, Read},
     net::SocketAddr,
-    thread,
 };
 use tokio_postgres::{Client, NoTls};
 use tower_http::cors::CorsLayer;
@@ -134,11 +133,6 @@ async fn download_img(params: Path<Vec<String>>) -> Response<Body> {
     let mut buf_reader = BufReader::new(h);
     let mut contents = Vec::new();
     buf_reader.read_to_end(&mut contents).unwrap();
-    // let attachment = format!("attachment; filename={}", p);
-    // Response::builder()
-    //     .header("Content-Disposition", attachment)
-    //     .body(Body::from(contents))
-    //     .unwrap()
     Response::new(Body::from(contents))
 }
 
@@ -168,45 +162,56 @@ async fn mult_upload(mut multipart: Multipart) {
     let mut index = 0;
     while let Some(field) = multipart.next_field().await.unwrap() {
         let name = field.name().unwrap().to_string();
-        if name == "admin_id" {
-            admin_id = field.text().await.unwrap();
-        } else if name == "car_id" {
-            let g=db_client().await;
-            let q=format!("INSERT INTO cars (owner_id,car_id) VALUES ('{}','{}')",admin_id,car_id);
-            g.execute(q.as_str(),&[]).await.unwrap();
-            car_id = field.text().await.unwrap();
-            img_path = format!("images/{}/{}/", admin_id, car_id);
-            match fs::create_dir_all(&img_path) {
-                Ok(_) => {}
-                Err(e) => {
-                    println!("failed to create directories {}", e)
+        match name.as_str() {
+            "admin_id" => {
+                admin_id = field.text().await.unwrap();
+            },
+            "car_id"=>{
+                let g=db_client().await;
+                let q=format!("INSERT INTO cars (owner_id,car_id) VALUES ('{}','{}')",admin_id,car_id);
+                g.execute(q.as_str(),&[]).await.unwrap();
+                car_id = field.text().await.unwrap();
+                img_path = format!("images/{}/{}/", admin_id, car_id);
+                match fs::create_dir_all(&img_path) {
+                    Ok(_) => {}
+                    Err(e) => {
+                        println!("failed to create directories {}", e)
+                    }
+                }    
+            },
+            "model"=>{},
+            "location"=>{},
+            "description"=>{},
+            "daily_price"=>{},
+            "hourly_price"=>{},
+            "daily_down_payment"=>{},
+            "hourly_down_payment"=>{},
+            _=> {
+                let mut img_file_format = match field.content_type() {
+                    Some(x) => x,
+                    None => "image/png",
                 }
-            }
-        } else {
-            let mut img_file_format = match field.content_type() {
-                Some(x) => x,
-                None => "image/png",
-            }
-            .to_owned();
-            // remove image/ from the content type
-            img_file_format = img_file_format.replace("image/", "");
-            let img_name = format!("img_{}.{}", index, img_file_format);
-            println!("file format {}", img_file_format);
-            let img = image::load_from_memory(&field.bytes().await.unwrap()).unwrap();
-            img_path.push_str(&img_name);
-            match img.save(&img_path) {
-                Ok(_) => {
-                    index += 1;
+                .to_owned();
+                // remove image/ from the content type
+                img_file_format = img_file_format.replace("image/", "");
+                let img_name = format!("img_{}.{}", index, img_file_format);
+                println!("file format {}", img_file_format);
+                let img = image::load_from_memory(&field.bytes().await.unwrap()).unwrap();
+                img_path.push_str(&img_name);
+                match img.save(&img_path) {
+                    Ok(_) => {
+                        index += 1;
+                    }
+                    Err(e) => {
+                        println!("Failed to save image: {}", e)
+                    }
                 }
-                Err(e) => {
-                    println!("Failed to save image: {}", e)
-                }
-            }
-            let g=db_client().await;
-            let q=format!("UPDATE cars SET car_images = array_append(car_images, '{}') WHERE owner_id='{}' AND car_id='{}'",img_name,admin_id,car_id);
-            g.execute(q.as_str(),&[]).await.unwrap();
-            println!("Length of `{}` ", img_path);
-            img_path = img_path.replace(&name, "");
+                let g=db_client().await;
+                let q=format!("UPDATE cars SET car_images = array_append(car_images, '{}') WHERE owner_id='{}' AND car_id='{}'",img_name,admin_id,car_id);
+                g.execute(q.as_str(),&[]).await.unwrap();
+                println!("Length of `{}` ", img_path);
+                img_path = img_path.replace(&img_name, "");    
+            },
         }
     }
 }
