@@ -56,8 +56,8 @@ struct Pricing {
 }
 #[derive(serde::Deserialize, serde::Serialize)]
 struct Amount {
-    amount: f32,
-    downpayment_amt: f32,
+    amount: f64,
+    downpayment_amt: f64,
 }
 #[tokio::main]
 async fn main() {
@@ -145,10 +145,10 @@ async fn handler() -> Json<Vec<Car>> {
         let model: String = row.get::<_, String>("model");
         let location: String = row.get::<_, String>("location");
         let description: String = row.get::<_, String>("description");
-        let daily_amount: f32 = row.get::<_, f32>("daily_amount");
-        let hourly_amount: f32 = row.get::<_, f32>("hourly_amount");
-        let daily_downpayment_amt: f32 = row.get::<_, f32>("daily_downpayment_amt");
-        let hourly_downpayment_amt: f32 = row.get::<_, f32>("hourly_downpayment_amt");
+        let daily_amount: f64 = row.get::<_, f64>("daily_amount");
+        let hourly_amount: f64 = row.get::<_, f64>("hourly_amount");
+        let daily_downpayment_amt: f64 = row.get::<_, f64>("daily_downpayment_amt");
+        let hourly_downpayment_amt: f64 = row.get::<_, f64>("hourly_downpayment_amt");
         let car_images: Vec<String> = row.get::<_, Vec<String>>("car_images");
         let available: bool = row.get::<_,bool>("available");
         let car = Car {
