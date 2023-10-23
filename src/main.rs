@@ -291,8 +291,11 @@ async fn mult_upload(mut multipart: Multipart) {
             }
         }
     }
+    // loop into images and format them thisway
+    //  ARRAY['humberto-portillo-ghwx9-wDn-w-unsplash.jpg']
+    let images = format!("ARRAY{:?}", images);
     let q = format!(
-        "INSERT INTO car (owner_id,car_id,model,location,description,daily_amount,hourly_amount,daily_downpayment_amt,hourly_downpayment_amt,car_images,available) VALUES ('{}','{}','{}','{}','{}',{},{},{},{},'{}',{})",
+        "INSERT INTO car (owner_id,car_id,model,location,description,daily_amount,hourly_amount,daily_downpayment_amt,hourly_downpayment_amt,car_images,available) VALUES ('{}','{}','{}','{}','{}',{},{},{},{},{},{})",
         admin_id,
         car_id,
         model,
@@ -302,8 +305,9 @@ async fn mult_upload(mut multipart: Multipart) {
         hourly_price,
         daily_down_payment,
         hourly_down_payment,
-        serde_json::to_string(&images).unwrap(),
+        images,
         available
     );
     g.execute(q.as_str(), &[]).await.unwrap();
+
 }
