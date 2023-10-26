@@ -230,12 +230,13 @@ async fn mult_upload(mut multipart: Multipart) {
     let g = db_client().await;
     while let Some(field) = multipart.next_field().await.unwrap() {
         let name = field.name().unwrap().to_string();
+         println!("{:?}",name);
         match name.as_str() {
             "admin_id" => {
-                admin_id = field.text().await.unwrap();
+                admin_id = field.text().await.unwrap().replace("\"","");
             }
             "car_id" => {
-                car_id = field.text().await.unwrap();
+                car_id = field.text().await.unwrap().replace("\"","");
                 img_path = format!("images/{}/{}/", admin_id, car_id);
                 match fs::create_dir_all(&img_path) {
                     Ok(_) => {}
@@ -276,6 +277,7 @@ async fn mult_upload(mut multipart: Multipart) {
                 .to_owned();
                 // remove image/ from the content type
                 img_file_format = img_file_format.replace("image/", "");
+                img_file_format = img_file_format.replace("*","jpeg");
                 let img_name = format!("img_{}.{}", index, img_file_format);
                 println!("file format {}", img_file_format);
                 let img = image::load_from_memory(&field.bytes().await.unwrap()).unwrap();
