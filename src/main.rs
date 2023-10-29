@@ -71,6 +71,7 @@ async fn main() {
         .route("/buyr", post(process_payment))
         .route("/car/upload/:filename", post(img_upload))
         .route("/car/mult_upload", post(mult_upload))
+        .route("/user/tokens", post(query_token))
         .route("/path", post(call_back_url))
         .route("/user/new", post(create_user))
         .route("/user/login", post(user_login))
@@ -239,6 +240,17 @@ async fn book(req_details: Json<BookingDetails>) -> StatusCode {
     );
     g.execute(x.as_str(), &[]).await.unwrap();
     return StatusCode::OK;
+}
+async fn query_token(uid: Json<String>) -> String {
+    let g = db_client().await;
+    let uid = uid.0;
+    let x = format!("SELECT tokens FROM users WHERE user_id='{}'", uid);
+    let rows = g.query(x.as_str(), &[]).await.unwrap();
+    let mut user_tokens = String::new();
+    for row in rows {
+        user_tokens = row.get::<_, String>("tokens");
+    }
+    user_tokens
 }
 
 async fn mult_upload(mut multipart: Multipart) {
