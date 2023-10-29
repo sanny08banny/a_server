@@ -32,6 +32,7 @@ struct PaymentDetails {
 struct BookingDetails {
     user_id: String,
     car_id: String,
+    description: String,
 }
 #[derive(serde::Deserialize, serde::Serialize)]
 struct User {
@@ -65,7 +66,7 @@ async fn main() {
     let app = Router::new()
         .route("/cars", get(handler))
         .route("/car_img", get(image_handler))
-        .route("/car/book", post(book))
+        .route("/car/action", post(book))
         .route("/car/:owner_id/:car_id/:file_name", get(download_img))
         .route("/buyr", post(process_payment))
         .route("/car/upload/:filename", post(img_upload))
@@ -107,9 +108,10 @@ async fn create_user(user: Json<User>) {
     let user = user.0;
     let email = user.email;
     let password = user.password;
+    let r_tokens = 30.00;
     let q = format!(
-        "INSERT INTO users (email,password) VALUES ('{}','{}')",
-        email, password
+        "INSERT INTO users (email,password,tokens) VALUES ('{}','{}','{}')",
+        email, password, r_tokens
     );
     g.execute(q.as_str(), &[]).await.unwrap();
 }
@@ -150,7 +152,7 @@ async fn handler() -> Json<Vec<Car>> {
         let daily_downpayment_amt: f64 = row.get::<_, f64>("daily_downpayment_amt");
         let hourly_downpayment_amt: f64 = row.get::<_, f64>("hourly_downpayment_amt");
         let car_images: Vec<String> = row.get::<_, Vec<String>>("car_images");
-        let available: bool = row.get::<_,bool>("available");
+        let available: bool = row.get::<_, bool>("available");
         let car = Car {
             car_images,
             model,
@@ -172,8 +174,6 @@ async fn handler() -> Json<Vec<Car>> {
         };
         x.push(car);
     }
-    // let y = fs::read_to_string("src/dummy/cars.json").expect("json file not found");
-    // let x: Value = serde_json::from_str(&y).expect("invalid json");
     Json(x)
 }
 
@@ -209,8 +209,36 @@ async fn process_payment(payment_details: Json<PaymentDetails>) {
     println!("{:?}", processor.handle_payment().await);
 }
 
-async fn book(req_details: Json<BookingDetails>) {
+async fn book(req_details: Json<BookingDetails>) -> StatusCode {
     let det = req_details.0;
+    let g = db_client().await;
+    let y = format!(
+        "SELECT booking_tokens FROM car WHERE car_id='{}'",
+        det.car_id
+    );
+    let rows = g.query(y.as_str(), &[]).await.unwrap();
+    let mut booking_tokens = String::new();
+    for row in rows {
+        booking_tokens = row.get::<_, String>("booking_tokens");
+    }
+    let booking_tokens: f64 = booking_tokens.parse().unwrap();
+    let x = format!("SELECT tokens FROM users WHERE user_id='{}'", det.user_id);
+    let rows = g.query(x.as_str(), &[]).await.unwrap();
+    let mut user_tokens = String::new();
+    for row in rows {
+        user_tokens = row.get::<_, String>("tokens");
+    }
+    let user_tokens: f64 = user_tokens.parse().unwrap();
+    if user_tokens < booking_tokens {
+        return StatusCode::EXPECTATION_FAILED;
+    }
+    let new_user_tokens = user_tokens - booking_tokens;
+    let x = format!(
+        "UPDATE users SET tokens='{}' WHERE user_id='{}'",
+        new_user_tokens, det.user_id
+    );
+    g.execute(x.as_str(), &[]).await.unwrap();
+    return StatusCode::OK;
 }
 
 async fn mult_upload(mut multipart: Multipart) {
@@ -230,13 +258,13 @@ async fn mult_upload(mut multipart: Multipart) {
     let g = db_client().await;
     while let Some(field) = multipart.next_field().await.unwrap() {
         let name = field.name().unwrap().to_string();
-         println!("{:?}",name);
+        println!("{:?}", name);
         match name.as_str() {
             "admin_id" => {
-                admin_id = field.text().await.unwrap().replace("\"","");
+                admin_id = field.text().await.unwrap().replace("\"", "");
             }
             "car_id" => {
-                car_id = field.text().await.unwrap().replace("\"","");
+                car_id = field.text().await.unwrap().replace("\"", "");
                 img_path = format!("images/{}/{}/", admin_id, car_id);
                 match fs::create_dir_all(&img_path) {
                     Ok(_) => {}
@@ -277,7 +305,7 @@ async fn mult_upload(mut multipart: Multipart) {
                 .to_owned();
                 // remove image/ from the content type
                 img_file_format = img_file_format.replace("image/", "");
-                img_file_format = img_file_format.replace("*","jpeg");
+                img_file_format = img_file_format.replace("*", "jpeg");
                 let img_name = format!("img_{}.{}", index, img_file_format);
                 println!("file format {}", img_file_format);
                 let img = image::load_from_memory(&field.bytes().await.unwrap()).unwrap();
@@ -296,15 +324,12 @@ async fn mult_upload(mut multipart: Multipart) {
             }
         }
     }
-    // loop into images and format them thisway
-    //  ARRAY['humberto-portillo-ghwx9-wDn-w-unsplash.jpg']
-    let r= images.clone();
-    for(i,x) in r.iter().enumerate(){
-        images[i] = format!("'{}'",x);
+    let r = images.clone();
+    for (i, x) in r.iter().enumerate() {
+        images[i] = format!("'{}'", x);
     }
     let images = format!("ARRAY[{}]", images.join(","));
     println!("{}", images);
-    // convert the prices to f64
     let hourly_price: f64 = hourly_price.parse().unwrap();
     let daily_price: f64 = daily_price.parse().unwrap();
     let hourly_down_payment: f64 = hourly_down_payment.parse().unwrap();
@@ -315,5 +340,4 @@ async fn mult_upload(mut multipart: Multipart) {
           ('{}', {}, '{}', '{}', '{}', '{}', {}, {}, {}, {}, {})",car_id,images,model,admin_id,location,description,hourly_price,hourly_down_payment,daily_price,daily_down_payment,available
     );
     g.execute(q.as_str(), &[]).await.unwrap();
-
 }
