@@ -47,17 +47,9 @@ struct Car {
     owner_id: String,
     location: String,
     description: String,
-    pricing: Pricing,
-    available: bool,
-}
-#[derive(serde::Deserialize, serde::Serialize)]
-struct Pricing {
-    daily: Amount,
-}
-#[derive(serde::Deserialize, serde::Serialize)]
-struct Amount {
     amount: f64,
     downpayment_amt: f64,
+    available: bool,
 }
 #[tokio::main]
 async fn main() {
@@ -158,12 +150,8 @@ async fn handler() -> Json<Vec<Car>> {
             owner_id,
             location,
             description,
-            pricing: Pricing {
-                daily: Amount {
-                    amount: daily_amount,
-                    downpayment_amt: daily_downpayment_amt,
-                },
-            },
+            amount: daily_amount,
+            downpayment_amt: daily_downpayment_amt,
             available,
         };
         x.push(car);
