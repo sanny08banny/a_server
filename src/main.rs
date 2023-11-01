@@ -260,9 +260,9 @@ async fn mult_upload(mut multipart: Multipart) {
     let mut location = String::new();
     let mut description = String::new();
     let mut daily_price = String::new();
-    let mut hourly_price = String::new();
+    // let mut hourly_price = String::new();
     let mut daily_down_payment = String::new();
-    let mut hourly_down_payment = String::new();
+    // let mut hourly_down_payment = String::new();
     let mut available = true;
     let mut images: Vec<String> = Vec::new();
     let mut img_path = String::new();
@@ -297,14 +297,8 @@ async fn mult_upload(mut multipart: Multipart) {
             "daily_price" => {
                 daily_price = field.text().await.unwrap();
             }
-            "hourly_price" => {
-                hourly_price = field.text().await.unwrap();
-            }
             "daily_down_payment" => {
                 daily_down_payment = field.text().await.unwrap();
-            }
-            "hourly_down_payment" => {
-                hourly_down_payment = field.text().await.unwrap();
             }
             "available" => {
                 available = field.text().await.unwrap().parse().unwrap();
@@ -342,14 +336,13 @@ async fn mult_upload(mut multipart: Multipart) {
     }
     let images = format!("ARRAY[{}]", images.join(","));
     println!("{}", images);
-    let hourly_price: f64 = hourly_price.parse().unwrap();
     let daily_price: f64 = daily_price.parse().unwrap();
-    let hourly_down_payment: f64 = hourly_down_payment.parse().unwrap();
     let daily_down_payment: f64 = daily_down_payment.parse().unwrap();
     let q = format!(
-        "INSERT INTO car (car_id, car_images, model, owner_id, location, description, hourly_amount, hourly_downpayment_amt, daily_amount, daily_downpayment_amt, available)
+        "INSERT INTO car (car_id, car_images, model, owner_id, location, description, daily_amount, daily_downpayment_amt, available)
         VALUES
-          ('{}', {}, '{}', '{}', '{}', '{}', {}, {}, {}, {}, {})",car_id,images,model,admin_id,location,description,hourly_price,hourly_down_payment,daily_price,daily_down_payment,available
+          ('{}', {}, '{}', '{}', {}, {}, {}, {}, {})",
+          car_id,images,model,admin_id,location,description,daily_price,daily_down_payment,available
     );
     g.execute(q.as_str(), &[]).await.unwrap();
 }
