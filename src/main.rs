@@ -269,19 +269,19 @@ async fn mult_upload(mut multipart: Multipart) {
                 }
             }
             "model" => {
-                model = field.text().await.unwrap();
+                model = field.text().await.unwrap().replace("\"", "");
             }
             "location" => {
-                location = field.text().await.unwrap();
+                location = field.text().await.unwrap().replace("\"", "");
             }
             "description" => {
-                description = field.text().await.unwrap();
+                description = field.text().await.unwrap().replace("\"", "");
             }
             "daily_price" => {
-                daily_price = field.text().await.unwrap();
+                daily_price = field.text().await.unwrap().replace("\"", "");
             }
             "daily_down_payment" => {
-                daily_down_payment = field.text().await.unwrap();
+                daily_down_payment = field.text().await.unwrap().replace("\"", "");
             }
             "available" => {
                 available = field.text().await.unwrap().parse().unwrap();
