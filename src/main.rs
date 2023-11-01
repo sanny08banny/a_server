@@ -324,7 +324,7 @@ async fn mult_upload(mut multipart: Multipart) {
     let q = format!(
         "INSERT INTO car (car_id, car_images, model, owner_id, location, description, daily_amount, daily_downpayment_amt, available)
         VALUES
-          ('{}', {}, '{}', '{}', {}, {}, {}, {}, {})",
+          ('{}', {}, '{}', '{}', '{}', '{}', {}, {}, {})",
           car_id,images,model,admin_id,location,description,daily_price,daily_down_payment,available
     );
     g.execute(q.as_str(), &[]).await.unwrap();
