@@ -199,11 +199,10 @@ async fn book(req_details: Json<BookingDetails>) -> StatusCode {
         det.car_id
     );
     let rows = g.query(y.as_str(), &[]).await.unwrap();
-    let mut booking_tokens = String::new();
+    let mut booking_tokens=0.00;
     for row in rows {
-        booking_tokens = row.get::<_, String>("booking_tokens");
+        booking_tokens = row.get::<_, f64>("booking_tokens");
     }
-    let booking_tokens: f64 = booking_tokens.parse().unwrap();
     let x = format!("SELECT tokens FROM users WHERE user_id='{}'", det.user_id);
     let rows = g.query(x.as_str(), &[]).await.unwrap();
     let mut user_tokens = String::new();
