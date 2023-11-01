@@ -193,32 +193,36 @@ async fn process_payment(payment_details: Json<PaymentDetails>) {
 
 async fn book(req_details: Json<BookingDetails>) -> StatusCode {
     let det = req_details.0;
-    let g = db_client().await;
-    let y = format!(
-        "SELECT booking_tokens FROM car WHERE car_id='{}'",
-        det.car_id
-    );
-    let rows = g.query(y.as_str(), &[]).await.unwrap();
-    let mut booking_tokens=0.00;
-    for row in rows {
-        booking_tokens = row.get::<_, f64>("booking_tokens");
+    if (det.description == "book") {
+        let g = db_client().await;
+        let y = format!(
+            "SELECT booking_tokens FROM car WHERE car_id='{}'",
+            det.car_id
+        );
+        let rows = g.query(y.as_str(), &[]).await.unwrap();
+        let mut booking_tokens = 0.00;
+        for row in rows {
+            booking_tokens = row.get::<_, f64>("booking_tokens");
+        }
+        let x = format!("SELECT tokens FROM users WHERE user_id='{}'", det.user_id);
+        let rows = g.query(x.as_str(), &[]).await.unwrap();
+        let mut user_tokens = 0.00;
+        for row in rows {
+            user_tokens = row.get::<_, f64>("tokens");
+        }
+        if user_tokens < booking_tokens {
+            return StatusCode::EXPECTATION_FAILED;
+        }
+        let new_user_tokens = user_tokens - booking_tokens;
+        let x = format!(
+            "UPDATE users SET tokens='{}' WHERE user_id='{}'",
+            new_user_tokens, det.user_id
+        );
+        g.execute(x.as_str(), &[]).await.unwrap();
+    } else if det.description == "unbook" {
+        return StatusCode::OK;
     }
-    let x = format!("SELECT tokens FROM users WHERE user_id='{}'", det.user_id);
-    let rows = g.query(x.as_str(), &[]).await.unwrap();
-    let mut user_tokens = 0.00;
-    for row in rows {
-        user_tokens = row.get::<_, f64>("tokens");
-    }
-    if user_tokens < booking_tokens {
-        return StatusCode::EXPECTATION_FAILED;
-    }
-    let new_user_tokens = user_tokens - booking_tokens;
-    let x = format!(
-        "UPDATE users SET tokens='{}' WHERE user_id='{}'",
-        new_user_tokens, det.user_id
-    );
-    g.execute(x.as_str(), &[]).await.unwrap();
-    return StatusCode::OK;
+    return StatusCode::NOT_FOUND;
 }
 async fn query_token(uid: Json<String>) -> String {
     let g = db_client().await;
