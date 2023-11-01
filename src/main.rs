@@ -205,11 +205,10 @@ async fn book(req_details: Json<BookingDetails>) -> StatusCode {
     }
     let x = format!("SELECT tokens FROM users WHERE user_id='{}'", det.user_id);
     let rows = g.query(x.as_str(), &[]).await.unwrap();
-    let mut user_tokens = String::new();
+    let mut user_tokens = 0.00;
     for row in rows {
-        user_tokens = row.get::<_, String>("tokens");
+        user_tokens = row.get::<_, f64>("tokens");
     }
-    let user_tokens: f64 = user_tokens.parse().unwrap();
     if user_tokens < booking_tokens {
         return StatusCode::EXPECTATION_FAILED;
     }
