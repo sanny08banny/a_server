@@ -52,7 +52,6 @@ struct Car {
 }
 #[derive(serde::Deserialize, serde::Serialize)]
 struct Pricing {
-    hourly: Amount,
     daily: Amount,
 }
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -149,9 +148,7 @@ async fn handler() -> Json<Vec<Car>> {
         let location: String = row.get::<_, String>("location");
         let description: String = row.get::<_, String>("description");
         let daily_amount: f64 = row.get::<_, f64>("daily_amount");
-        let hourly_amount: f64 = row.get::<_, f64>("hourly_amount");
         let daily_downpayment_amt: f64 = row.get::<_, f64>("daily_downpayment_amt");
-        let hourly_downpayment_amt: f64 = row.get::<_, f64>("hourly_downpayment_amt");
         let car_images: Vec<String> = row.get::<_, Vec<String>>("car_images");
         let available: bool = row.get::<_, bool>("available");
         let car = Car {
@@ -162,10 +159,6 @@ async fn handler() -> Json<Vec<Car>> {
             location,
             description,
             pricing: Pricing {
-                hourly: Amount {
-                    amount: hourly_amount,
-                    downpayment_amt: hourly_downpayment_amt,
-                },
                 daily: Amount {
                     amount: daily_amount,
                     downpayment_amt: daily_downpayment_amt,
