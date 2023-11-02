@@ -20,6 +20,7 @@ mod payment_gateway;
 mod r;
 mod rental;
 mod verification;
+mod review;
 use payment_gateway::mpesa_payment_gateway::MpesaPaymentProcessor;
 
 #[derive(serde::Deserialize)]
@@ -51,6 +52,7 @@ struct Car {
     downpayment_amt: f64,
     available: bool,
 }
+
 #[tokio::main]
 async fn main() {
     let addr = "0.0.0.0:4000";
@@ -224,16 +226,16 @@ async fn book(req_details: Json<BookingDetails>) -> StatusCode {
     }
     return StatusCode::NOT_FOUND;
 }
-async fn query_token(uid: Json<String>) -> String {
+async fn query_token(uid: Json<String>) -> Json<f64> {
     let g = db_client().await;
     let uid = uid.0;
     let x = format!("SELECT tokens FROM users WHERE user_id='{}'", uid);
     let rows = g.query(x.as_str(), &[]).await.unwrap();
-    let mut user_tokens = String::new();
+    let mut user_tokens = 0.00;
     for row in rows {
-        user_tokens = row.get::<_, String>("tokens");
+        user_tokens = row.get::<_, f64>("tokens");
     }
-    user_tokens
+    axum::Json(user_tokens)
 }
 
 async fn mult_upload(mut multipart: Multipart) {
