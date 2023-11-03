@@ -221,6 +221,7 @@ async fn book(req_details: Json<BookingDetails>) -> StatusCode {
             new_user_tokens, det.user_id
         );
         g.execute(x.as_str(), &[]).await.unwrap();
+        return StatusCode::OK;
     } else if det.description == "unbook" {
         return StatusCode::OK;
     }
