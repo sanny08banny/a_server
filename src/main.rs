@@ -321,13 +321,14 @@ async fn mult_upload(mut multipart: Multipart) {
     }
     let images = format!("ARRAY[{}]", images.join(","));
     println!("{}", images);
+    let token = 10.0;
     let daily_price: f64 = daily_price.parse().unwrap();
     let daily_down_payment: f64 = daily_down_payment.parse().unwrap();
     let q = format!(
-        "INSERT INTO car (car_id, car_images, model, owner_id, location, description, daily_amount, daily_downpayment_amt, available)
+        "INSERT INTO car (car_id, car_images, model, owner_id, location, description, daily_amount, daily_downpayment_amt, available,booking_tokens)
         VALUES
-          ('{}', {}, '{}', '{}', '{}', '{}', {}, {}, {})",
-          car_id,images,model,admin_id,location,description,daily_price,daily_down_payment,available
+          ('{}', {}, '{}', '{}', '{}', '{}', {}, {}, {},{})",
+          car_id,images,model,admin_id,location,description,daily_price,daily_down_payment,available,token
     );
     g.execute(q.as_str(), &[]).await.unwrap();
 }
