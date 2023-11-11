@@ -28,7 +28,7 @@ pub async fn car_review(ids:Json<Value>)->Json<Value>
 {
 let ids=ids.0;
 let car_id=ids.get("car_id").unwrap().to_string();
-let owner_id = ids.get("owner-id").unwrap().to_string();
+let owner_id = ids.get("owner_id").unwrap().to_string();
 let rev =Review{
     id:rand::thread_rng().gen_range(0..1000),
     user_name:"USER_NAME".to_string(),
