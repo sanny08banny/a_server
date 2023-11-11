@@ -1,4 +1,4 @@
 /target
 /images
 /verification_docs
-Cargo.lock
+./Cargo.lock
