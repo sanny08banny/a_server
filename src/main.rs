@@ -6,6 +6,7 @@ use axum::{
 };
 use hyper::StatusCode;
 use image_server::image_handler;
+use review::review::{car_review, post_review};
 use serde_json::{json, Value};
 use std::{
     fs::{self, File},
@@ -68,6 +69,8 @@ async fn main() {
         .route("/path", post(call_back_url))
         .route("/user/new", post(create_user))
         .route("/user/login", post(user_login))
+        .route("/car/review", post(car_review))
+        .route("/car/create_review", post(post(post_review)))
         .layer(CorsLayer::permissive());
     axum::Server::bind(&addr.trim().parse().expect("Invalid address"))
         .serve(app.into_make_service_with_connect_info::<SocketAddr>())
