@@ -59,7 +59,7 @@ Json(r)
 
 pub async fn post_review(rev:Json<Value>){
 let rev=rev.0;
-let user_name=rev.get("user_name").unwrap().to_string();
+let user_name=rev.get("user_id").unwrap().to_string();
 let title = rev.get("title").unwrap().to_string();
 let car_id = rev.get("car_id").unwrap().to_string();
 let comment = rev.get("comment").unwrap().to_string();
