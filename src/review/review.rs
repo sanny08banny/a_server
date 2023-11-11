@@ -1,6 +1,7 @@
 use axum::Json;
 use rand::Rng;
-use serde_json::Value;
+use serde::de::value;
+use serde_json::{Value, json};
 
 #[derive(serde::Deserialize, serde::Serialize)]
 struct Review {
@@ -23,7 +24,7 @@ struct DriverReview {
     review: Vec<Review>,
 }
 
-pub async fn car_review(ids:Json<Value>)->Json<CarReview>
+pub async fn car_review(ids:Json<Value>)->Json<Value>
 {
 let ids=ids.0;
 let car_id=ids.get("car_id").unwrap().to_string();
@@ -40,7 +41,20 @@ let car_rev=CarReview{
     car_id,
     review:vec![rev],
 };
-Json(car_rev)
+let r=json!({
+    "car_id":car_rev.car_id,
+    "owner_id":car_rev.owner_id,
+    "average":5,
+    "comments":[
+        {
+        "user_name":car_rev.review[0].user_name,
+        "title":car_rev.review[0].title,
+        "comment":car_rev.review[0].comment,
+        "rating":car_rev.review[0].rating
+    }
+    ]
+});
+Json(r)
 }
 
 pub async fn post_review(rev:Json<Value>){
