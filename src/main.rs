@@ -81,9 +81,6 @@ async fn main() {
         .await
         .unwrap();
 }
-async fn admin_req(j: Json<Value>){
-
-}
 async fn create_user(user: Json<User>) {
     let g = db_client().await;
     let user = user.0;
@@ -118,6 +115,15 @@ async fn user_login(user: Json<User>) -> Result<Json<Value>, StatusCode> {
     }
     let x = json!({"user_id":x,"is_admin":is_admin});
     Ok(Json(x))
+}
+async fn admin_req(j: Json<Value>)->Json<Value>{
+ let g=db_client().await;
+    let j=j.0.to_string();
+    // update users set isadmin=true where user_id='1';
+    let q=format!("UPDATE users SET is_admin=true WHERE user_id='{}'",j);
+    g.execute(q.as_str(),&[]).await.unwrap();
+    let p=json!({"user_id":j,"is_admin":true});
+    Json(p)
 }
 
 async fn handler() -> Json<Vec<Car>> {
