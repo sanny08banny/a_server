@@ -14,6 +14,7 @@ use std::{
     net::SocketAddr,
 };
 use tokio_postgres::{Client, NoTls};
+use crate::db_client::db_client;
 use tower_http::cors::CorsLayer;
 mod ecryption_engine;
 mod image_server;
@@ -22,6 +23,8 @@ mod r;
 mod rental;
 mod verification;
 mod review;
+mod search;
+mod db_client;
 use payment_gateway::mpesa_payment_gateway::MpesaPaymentProcessor;
 
 #[derive(serde::Deserialize)]
@@ -71,35 +74,16 @@ async fn main() {
         .route("/user/login", post(user_login))
         .route("/car/review", post(car_review))
         .route("/car/create_review", post(post(post_review)))
+        .route("/user/admin_req", post(admin_req))
         .layer(CorsLayer::permissive());
     axum::Server::bind(&addr.trim().parse().expect("Invalid address"))
         .serve(app.into_make_service_with_connect_info::<SocketAddr>())
         .await
         .unwrap();
 }
+async fn admin_req(j: Json<Value>){
 
-async fn db_client() -> Client {
-    let host = "localhost";
-    let user = "ubuntu";
-    let password = "new_password";
-    let dbname = "ubuntu";
-    let config_string = format!(
-        "host={} user={} password={} dbname={}",
-        host, user, password, dbname
-    );
-    let (client, monitor) = tokio_postgres::connect(config_string.as_str(), NoTls)
-        .await
-        .unwrap();
-
-    tokio::spawn(async move {
-        if let Err(e) = monitor.await {
-            eprintln!("Connection error: {}", e);
-        }
-    });
-
-    client
 }
-
 async fn create_user(user: Json<User>) {
     let g = db_client().await;
     let user = user.0;
@@ -123,14 +107,17 @@ async fn user_login(user: Json<User>) -> Result<Json<Value>, StatusCode> {
     );
     let rows = g.query(q.as_str(), &[]).await.unwrap();
     let mut x = String::new();
+    let mut is_admin = false;
     for row in rows {
         let id: i32 = row.get(0);
+        is_admin = row.get("isadmin");
         x = id.to_string();
     }
     if x.is_empty() {
         return Err(StatusCode::UNAUTHORIZED);
     }
-    Ok(Json(serde_json::to_value(x).unwrap()))
+    let x = json!({"user_id":x,"is_admin":is_admin});
+    Ok(Json(x))
 }
 
 async fn handler() -> Json<Vec<Car>> {
