@@ -118,7 +118,7 @@ async fn user_login(user: Json<User>) -> Result<Json<Value>, StatusCode> {
 }
 async fn admin_req(j: Json<Value>)->Json<Value>{
  let g=db_client().await;
-    let j=j.0.to_string();
+    let j=j.0.as_u64().unwrap();
     // update users set isadmin=true where user_id='1';
     let q=format!("UPDATE users SET is_admin=true WHERE user_id='{}'",j);
     g.execute(q.as_str(),&[]).await.unwrap();
