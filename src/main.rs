@@ -116,9 +116,11 @@ async fn user_login(user: Json<User>) -> Result<Json<Value>, StatusCode> {
     let x = json!({"user_id":x,"is_admin":is_admin});
     Ok(Json(x))
 }
-async fn admin_req(j: Json<Value>)->Json<Value>{
+async fn admin_req(j: Json<String>)->Json<Value>{
  let g=db_client().await;
-    let j=j.0.as_u64().unwrap();
+   println!("{}",j.0);
+    let j:u32=j.0.parse().unwrap();
+
     // update users set isadmin=true where user_id='1';
     let q=format!("UPDATE users SET is_admin=true WHERE user_id='{}'",j);
     g.execute(q.as_str(),&[]).await.unwrap();
