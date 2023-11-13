@@ -122,7 +122,7 @@ async fn admin_req(j: Json<String>)->Json<Value>{
     let j:u32=j.0.parse().unwrap();
 
     // update users set isadmin=true where user_id='1';
-    let q=format!("UPDATE users SET is_admin=true WHERE user_id='{}'",j);
+    let q=format!("UPDATE users SET isadmin=true WHERE user_id='{}'",j);
     g.execute(q.as_str(),&[]).await.unwrap();
     let p=json!({"user_id":j,"is_admin":true});
     Json(p)
