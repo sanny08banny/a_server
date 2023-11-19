@@ -13,7 +13,6 @@ use std::{
     io::{BufReader, Read},
     net::SocketAddr,
 };
-use tokio_postgres::{Client, NoTls};
 use crate::db_client::db_client;
 use tower_http::cors::CorsLayer;
 mod ecryption_engine;
@@ -24,8 +23,10 @@ mod rental;
 mod verification;
 mod review;
 mod search;
+mod location;
 mod db_client;
 use payment_gateway::mpesa_payment_gateway::MpesaPaymentProcessor;
+use crate::search::search::search;
 
 #[derive(serde::Deserialize)]
 struct PaymentDetails {
@@ -75,6 +76,7 @@ async fn main() {
         .route("/car/review", post(car_review))
         .route("/car/create_review", post(post(post_review)))
         .route("/user/admin_req", post(admin_req))
+        .route("/search", post(search))
         .layer(CorsLayer::permissive());
     axum::Server::bind(&addr.trim().parse().expect("Invalid address"))
         .serve(app.into_make_service_with_connect_info::<SocketAddr>())
@@ -193,7 +195,7 @@ async fn process_payment(payment_details: Json<PaymentDetails>) {
 
 async fn book(req_details: Json<BookingDetails>) -> StatusCode {
     let det = req_details.0;
-    if (det.description == "book") {
+    if det.description == "book" {
         let g = db_client().await;
         let y = format!(
             "SELECT booking_tokens FROM car WHERE car_id='{}'",
