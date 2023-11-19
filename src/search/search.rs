@@ -3,9 +3,42 @@ use std::collections::BTreeMap;
 use axum::Json;
 use serde_json::Value;
 use levenshtein;
-use crate::db_client::db_client;
+use crate::{db_client::db_client, Car};
 
-pub async fn search(keyword:Json<String>)->Json<Value>{
+async fn cars(search_res_map:BTreeMap<String,String>)->Vec<Car>{
+let g= db_client().await;
+let mut x = Vec::new();
+for (key,value) in search_res_map{
+    let f=format!("SELECT * FROM car WHERE {}='{}'",&value,key);
+    let rows = g.query(f.as_str(), &[]).await.unwrap_or_else(|_| panic!("Error on query"));
+    for row in rows {
+        let owner_id: String = row.get::<_, String>("owner_id");
+        let car_id: String = row.get::<_, String>("car_id");
+        let model: String = row.get::<_, String>("model");
+        let location: String = row.get::<_, String>("location");
+        let description: String = row.get::<_, String>("description");
+        let daily_amount: f64 = row.get::<_, f64>("daily_amount");
+        let daily_downpayment_amt: f64 = row.get::<_, f64>("daily_downpayment_amt");
+        let car_images: Vec<String> = row.get::<_, Vec<String>>("car_images");
+        let available: bool = row.get::<_, bool>("available");
+        let car = Car {
+            car_images,
+            model,
+            car_id,
+            owner_id,
+            location,
+            description,
+            amount: daily_amount,
+            downpayment_amt: daily_downpayment_amt,
+            available,
+        };
+        x.push(car);
+    }
+}
+x
+}
+
+pub async fn search(keyword:Json<String>)->Json<Vec<Car>>{
 let keyword=keyword.0;
 
 
@@ -42,5 +75,6 @@ for i in 0..model_result.len(){
 for i in 0..description_result.len(){
     result.insert(description_result[i].clone(),"description".to_string());
 }
-Json(serde_json::json!(result))
+let result=Json(cars(result).await);
+result
 }
