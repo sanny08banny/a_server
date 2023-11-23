@@ -189,4 +189,3 @@ pub async fn mult_upload(mut multipart: Multipart) {
     g.execute(q.as_str(), &[]).await.unwrap();
 }
 
-

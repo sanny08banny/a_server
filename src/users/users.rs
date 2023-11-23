@@ -49,14 +49,24 @@ pub async fn user_login(user: Json<User>) -> Result<Json<Value>, StatusCode> {
     let x = json!({"user_id":x,"is_admin":is_admin,"is_driver":is_driver});
     Ok(Json(x))
 }
-pub async fn change_category(j: Json<String>)->Json<Value>{
+
+pub async fn change_category(j: Json<Value>)->Json<Value>{
  let g=db_client().await;
    println!("{}",j.0);
-    let j:u32=j.0.parse().unwrap();
-
-    // update users set isadmin=true where user_id='1';
-    let q=format!("UPDATE users SET isadmin=true WHERE user_id='{}'",j);
-    g.execute(q.as_str(),&[]).await.unwrap();
-    let p=json!({"user_id":j,"is_admin":true});
-    Json(p)
+    let j=j.0;
+    let id:u32=j["user_id"].as_str().unwrap().parse().unwrap();
+    let category=j["category"].as_str().unwrap();
+    if category=="driver"{
+        let q=format!("UPDATE users SET isdriver=true WHERE user_id='{}'",id);
+        g.execute(q.as_str(),&[]).await.unwrap();
+        let p=json!({"user_id":id,"is_driver":true});
+        return Json(p);
+    }else if category=="admin" {
+        let q=format!("UPDATE users SET isadmin=true WHERE user_id='{}'",id);
+        g.execute(q.as_str(),&[]).await.unwrap();
+        let p=json!({"user_id":id,"is_admin":true});
+        return Json(p);
+    }
+    let p=json!({"user_id":id,"is_admin":false,"is_driver":false});
+    return Json(p);
 }
