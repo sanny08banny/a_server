@@ -10,7 +10,6 @@ pub struct User {
     password: String,
 }
 
-
 pub async fn create_user(user: Json<User>) {
     let g = db_client().await;
     let user = user.0;
@@ -65,6 +64,11 @@ pub async fn change_category(j: Json<Value>)->Json<Value>{
         let q=format!("UPDATE users SET isadmin=true WHERE user_id='{}'",id);
         g.execute(q.as_str(),&[]).await.unwrap();
         let p=json!({"user_id":id,"is_admin":true});
+        return Json(p);
+    }else if category=="normal"{
+        let q=format!("UPDATE users SET isadmin=false,isdriver=false WHERE user_id='{}'",id);
+        g.execute(q.as_str(),&[]).await.unwrap();
+        let p=json!({"user_id":id,"is_admin":false,"is_driver":false});
         return Json(p);
     }
     let p=json!({"user_id":id,"is_admin":false,"is_driver":false});
