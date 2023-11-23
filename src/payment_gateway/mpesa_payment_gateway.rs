@@ -1,3 +1,4 @@
+use axum::Json;
 use base64::Engine;
 use chrono::Local;
 use reqwest::{header, Client};
@@ -20,6 +21,14 @@ pub struct MpesaPaymentProcessor {
     account_reference: String,
     transaction_desc: String,
 }
+
+#[derive(serde::Deserialize)]
+pub struct PaymentDetails {
+    amount: f32,
+    phone_number: String,
+    description: String,
+}
+
 impl MpesaPaymentProcessor {
     pub fn new(amount: f32, phone_number: &str, description: &str) -> Self {
         let merchant = Merchant::get_credentials();
@@ -103,3 +112,18 @@ impl MpesaPaymentProcessor {
         println!("Test {:?}", plan.as_str());
     }
 }
+
+pub async fn call_back_url(j: Json<Value>) {
+    println!("Saf says:: {}", j.0);
+}
+
+pub async fn process_payment(payment_details: Json<PaymentDetails>) {
+    let details = payment_details.0;
+    let processor = MpesaPaymentProcessor::new(
+        details.amount,
+        details.phone_number.as_str(),
+        details.description.as_str(),
+    );
+    println!("{:?}", processor.handle_payment().await);
+}
+
