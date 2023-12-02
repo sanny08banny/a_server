@@ -3,13 +3,10 @@ use std::{
     io::{BufReader, Read},
 };
 
-use axum::{extract::{Path}, response::Response};
+use axum::{extract::Path, response::Response};
 use hyper::Body;
 
-pub async fn image_handler(owner_id:Path<String>,car_id:Path<String>,image:Path<String>) -> Response<Body> {
-    let owner_id = owner_id.0;
-    let car_id = car_id.0;
-    let image = image.0;
+pub async fn image_handler(Path((owner_id,car_id,image)):Path<(String,String,String)>) -> Response<Body> {
     let path = format!("images/{}/{}/{}", owner_id, car_id, image);
     let h = File::open(path).expect("file not found");
     let mut buf_reader = BufReader::new(h);
