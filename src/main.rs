@@ -26,7 +26,7 @@ async fn main() {
     let addr = "0.0.0.0:4000";
     let app = Router::new()
         .route("/cars", get(handler))
-        .route("/car_img", get(image_handler))
+        .route("/car/:owner_id/:car_id/:file_name", get(image_handler))
         .route("/car/action", post(book))
         .route("/buyr", post(process_payment))
         .route("/car/mult_upload", post(mult_upload))
