@@ -16,9 +16,10 @@ pub async fn create_user(user: Json<User>) {
     let email = user.email;
     let password = user.password;
     let r_tokens = 30.00;
+    let is_admin = false;
     let q = format!(
-        "INSERT INTO users (email,password,tokens) VALUES ('{}','{}','{}')",
-        email, password, r_tokens
+        "INSERT INTO users (email,password,tokens,isadmin) VALUES ('{}','{}','{}','{}')",
+        email, password, r_tokens, is_admin
     );
     g.execute(q.as_str(), &[]).await.unwrap();
 }
