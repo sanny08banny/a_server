@@ -23,8 +23,8 @@ pub async fn req_ride(det: Json<Value>) -> Result<Json<Value>, StatusCode> {
             "client_id": client_id,
         }
     );
-   //  let query=format!("SELECT notification_token FROM users WHERE user_id='{}'", driver);
-   let res = db.query("SELECT notification_token FROM users WHERE user_id='$1'", &[&driver]).await.unwrap();
+    let query=format!("SELECT notification_token FROM users WHERE user_id='{}'", driver);
+   let res = db.query(query.as_str(), &[]).await.unwrap();
    let token: String = res[0].get("notification_token");
 
     let mut notification_builder = fcm::NotificationBuilder::new();
