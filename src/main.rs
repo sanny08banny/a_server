@@ -1,5 +1,6 @@
 use axum::routing::{get, post, Router};
 use cars::cars::{Car, handler, mult_upload, book};
+use fcm_t::fcm::req_ride;
 use image_server::image_handler;
 use payment_gateway::mpesa_payment_gateway::{process_payment, call_back_url};
 use review::review::{car_review, post_review};
@@ -19,6 +20,7 @@ mod location;
 mod db_client;
 mod users;
 mod cars;
+mod fcm_t;
 use crate::search::search::search;
 
 #[tokio::main]
@@ -37,6 +39,7 @@ async fn main() {
         .route("/car/review", post(car_review))
         .route("/car/create_review", post(post(post_review)))
         .route("/user/admin_req", post(change_category))
+        .route("/req_ride", post(req_ride))
         .route("/search", post(search))
         .layer(CorsLayer::permissive());
     axum::Server::bind(&addr.trim().parse().expect("Invalid address"))
