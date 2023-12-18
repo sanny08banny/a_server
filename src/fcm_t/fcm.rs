@@ -31,7 +31,7 @@ pub async fn req_ride(det: Json<Value>) -> Result<Json<Value>, StatusCode> {
     notification_builder.title("Ride request!");
     notification_builder.body("User 1 has requested a ride!");
     notification_builder.tag("Ride req");
-    notification_builder.icon("ic_launcher");
+   //  notification_builder.icon("ic_launcher");
     
     let notification = notification_builder.finalize();
     let mut message_builder = fcm::MessageBuilder::new("AAAA1rzD5J4:APA91bEVDhK6QTL835XVuXPEEA0mbtV1q37zzZeTd0R7w2wHwyh-QyEjYP1CqZ2Jv6GKiSbuOrdLVi62TAThdyy4uPK4rYuphOLQPX_pfsx-l98jUmNPp6l_H7zCD_Jlq2i2-UZVlSXm",
