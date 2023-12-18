@@ -1,6 +1,6 @@
 use axum::routing::{get, post, Router};
 use cars::cars::{Car, handler, mult_upload, book};
-use fcm_t::fcm::req_ride;
+use fcm_t::{fcm::req_ride, token::update_token};
 use image_server::image_handler;
 use payment_gateway::mpesa_payment_gateway::{process_payment, call_back_url};
 use review::review::{car_review, post_review};
@@ -40,6 +40,7 @@ async fn main() {
         .route("/car/create_review", post(post(post_review)))
         .route("/user/admin_req", post(change_category))
         .route("/req_ride", post(req_ride))
+        .route("/token_update/:user_id/:token", post(update_token))
         .route("/search", post(search))
         .layer(CorsLayer::permissive());
     axum::Server::bind(&addr.trim().parse().expect("Invalid address"))
