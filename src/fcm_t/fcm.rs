@@ -4,7 +4,7 @@ use fcm;
 use hyper::{client, StatusCode};
 use serde_json::{json, Value};
 
-pub async fn req_ride(det: Json<Value>) -> Result<Json<Value>, StatusCode> {
+pub async fn req_ride(det: Json<Value>) -> Result<StatusCode, StatusCode> {
     let det = det.0;
     let db = db_client().await;
     let client_id = det["client_id"].as_str().unwrap();
@@ -42,5 +42,5 @@ pub async fn req_ride(det: Json<Value>) -> Result<Json<Value>, StatusCode> {
 
     let response = client.send(message_builder.finalize()).await.unwrap();
     println!("Sent: {:?}", response);
-    Ok(Json(json!({"status":"success"})))
+    Ok(StatusCode::OK)
 }
