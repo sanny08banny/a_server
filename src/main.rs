@@ -40,7 +40,7 @@ async fn main() {
         .route("/car/create_review", post(post(post_review)))
         .route("/user/admin_req", post(change_category))
         .route("/req_ride", post(req_ride))
-        .route("/token_update/:user_id/:token", post(update_token))
+        .route("/token_update/:user_id/:token", get(update_token))
         .route("/search", post(search))
         .layer(CorsLayer::permissive());
     axum::Server::bind(&addr.trim().parse().expect("Invalid address"))
