@@ -41,6 +41,7 @@ async fn main() {
         .route("/user/admin_req", post(change_category))
         .route("/req_ride", post(req_ride))
         .route("/token_update/:user_id/:token", get(update_token))
+        .route("/driver_response", post(fcm_t::token::driver_response))
         .route("/search", post(search))
         .layer(CorsLayer::permissive());
     axum::Server::bind(&addr.trim().parse().expect("Invalid address"))
