@@ -8,7 +8,7 @@ struct Review {
     user_name: String,
     title: String,
     comment: String,
-    rating: u8,
+    rating: f64,
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -33,7 +33,7 @@ let rev =Review{
     user_name:"USER_NAME".to_string(),
     title:"This the title".to_string(),
     comment:"Awesome".to_string(),
-    rating:5,
+    rating:5.0,
 };
 let car_rev=CarReview{
     owner_id,
@@ -62,12 +62,12 @@ let user_name=rev.get("user_id").unwrap().to_string();
 let title = rev.get("title").unwrap().to_string();
 let car_id = rev.get("car_id").unwrap().to_string();
 let comment = rev.get("comment").unwrap().to_string();
-let rating = rev.get("rating").unwrap().as_u64().unwrap();
+let rating = rev.get("rating").unwrap().as_f64().unwrap();
 let rev =Review{
     id:rand::thread_rng().gen_range(0..1000),
     user_name,
     title,
     comment,
-    rating:rating as u8,
+    rating,
 };
 }
