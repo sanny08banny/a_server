@@ -4,7 +4,7 @@ use serde_json::{Value, json};
 
 use crate::db_client;
 
-#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(serde::Deserialize, serde::Serialize,Debug)]
 pub struct User {
     email: String,
     password: String,
@@ -14,6 +14,7 @@ pub struct User {
 pub async fn create_user(user: Json<User>) {
     let g = db_client().await;
     let user = user.0;
+    println!("{:?}", user);
     let email = user.email;
     let password = user.password;
     let notification_id = user.notification_id;
