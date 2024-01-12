@@ -22,7 +22,7 @@ pub async fn create_user(user: Json<User>) {
     let is_admin = false;
     let is_driver = false;
     let q = format!(
-        "INSERT INTO users (email,password,tokens,isadmin,isdriver) VALUES ('{}','{}','{}','{}','{}','{}')",
+        "INSERT INTO users (email,password,tokens,isadmin,isdriver,notification_token) VALUES ('{}','{}','{}','{}','{}','{}')",
         email, password, r_tokens, is_admin, is_driver,notification_id
     );
     g.execute(q.as_str(), &[]).await.unwrap();
