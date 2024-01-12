@@ -8,6 +8,7 @@ use crate::db_client;
 pub struct User {
     email: String,
     password: String,
+    notification_id: String,
 }
 
 pub async fn create_user(user: Json<User>) {
@@ -15,12 +16,13 @@ pub async fn create_user(user: Json<User>) {
     let user = user.0;
     let email = user.email;
     let password = user.password;
+    let notification_id = user.notification_id;
     let r_tokens = 600.00;
     let is_admin = false;
     let is_driver = false;
     let q = format!(
-        "INSERT INTO users (email,password,tokens,isadmin,isdriver) VALUES ('{}','{}','{}','{}','{}')",
-        email, password, r_tokens, is_admin, is_driver
+        "INSERT INTO users (email,password,tokens,isadmin,isdriver) VALUES ('{}','{}','{}','{}','{}','{}')",
+        email, password, r_tokens, is_admin, is_driver,notification_id
     );
     g.execute(q.as_str(), &[]).await.unwrap();
 }
