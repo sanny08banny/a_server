@@ -38,7 +38,7 @@ async fn send_notification(det: Value, category: &str) {
     } else if category == "Owner" {
         details = json!(
         {
-            "ride_id": client_id.to_owned()+"_"+recepient,
+            "booking_id": client_id.to_owned()+"_"+recepient,
             "user_name": "User 1",
             "user_phone": "0707676913",
             "client_id": client_id,
