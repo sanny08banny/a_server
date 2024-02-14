@@ -40,6 +40,7 @@ async fn main() {
         .route("/car/create_review", post(post(post_review)))
         .route("/user/admin_req", post(change_category))
         .route("/req_ride", post(req_ride))
+        .route("/book_car", post(fcm_t::fcm::book_car))
         .route("/token_update/:user_id/:token", get(update_token))
         .route("/driver_response", post(fcm_t::token::driver_response))
         .route("/search", post(search))
