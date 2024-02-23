@@ -20,15 +20,23 @@ async fn send_notification(det: Value, category: &str) {
     let db = db_client().await;
     let client_id = det["client_id"].as_str().unwrap();
     let recepient = det["recepient_id"].as_str().unwrap();
-
+    
     let client = fcm::Client::new();
     let mut details: Value = json!({});
+    // get username from db
+    let mut query = format!(
+        "SELECT user_name, user_phone FROM users WHERE user_id='{}'",
+        client_id
+    );
+    let res = db.query(query.as_str(), &[]).await.unwrap();
+    let user_name: String = res[0].get("user_name");
+    let user_phone: String = res[0].get("user_phone");
     if category == "Driver" {
         details = json!(
         {
             "ride_id": client_id.to_owned()+"_"+recepient,
-            "user_name": "User 1",
-            "user_phone": "0707676913",
+            "user_name": user_name,
+            "user_phone": user_phone,
             "dest_lat": det["dest_lat"].as_f64().unwrap(),
             "dest_lon": det["dest_lon"].as_f64().unwrap(),
             "current_lat": det["current_lat"].as_f64().unwrap(),
@@ -39,12 +47,13 @@ async fn send_notification(det: Value, category: &str) {
         details = json!(
         {
             "booking_id": client_id.to_owned()+"_"+recepient,
-            "user_name": "User 1",
-            "user_phone": "0707676913",
+            "user_name": user_name,
+            "user_phone": user_phone,
+            "car_id": det["car_id"].as_str().unwrap(),
             "client_id": client_id,
         });
     }
-    let query = format!(
+    query = format!(
         "SELECT notification_token FROM users WHERE user_id='{}'",
         recepient
     );
