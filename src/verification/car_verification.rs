@@ -1,3 +1,3 @@
-struct Details{
-    owner_id:String,
+struct Details {
+	owner_id: String,
 }
