@@ -14,10 +14,12 @@ pub async fn update_token(h: Path<(String, String)>) -> Result<StatusCode, Statu
 	Ok(StatusCode::OK)
 }
 
-pub async fn driver_response(res: Json<Value>) -> Result<StatusCode, StatusCode> {
-	let res = res.0;
-	let client_id = res["client_id"].as_str().unwrap();
-	let status = res["status"].as_str().unwrap();
-	println!("{} {}", client_id, status);
-	return Ok(StatusCode::OK);
+pub async fn driver_response(res:Json<Value>)->Result<StatusCode,StatusCode>
+{
+    let res = res.0;
+    let client_id = res["client_id"].as_str().unwrap();
+    let status = res["status"].as_str().unwrap();
+    let driver_id = res["driver_id"].as_str().unwrap();
+    println!("{} {}", client_id, status);
+return Ok(StatusCode::OK);
 }
