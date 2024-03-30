@@ -1,6 +1,6 @@
 use crate::db_client::db_client;
 use axum::routing::{get, post, Router};
-use cars::cars::{book, handler, mult_upload, Car};
+use cars::cars::{accept_book, book, handler, mult_upload, Car};
 use fcm_t::{fcm::req_ride, token::update_token};
 use image_server::image_handler;
 use payment_gateway::mpesa_payment_gateway::{call_back_url, process_payment};
@@ -29,7 +29,7 @@ async fn main() {
 	let app = Router::new()
 		.route("/cars", get(handler))
 		.route("/car/:owner_id/:car_id/:file_name", get(image_handler))
-		.route("/car/action", post(book))
+		.route("/accept_book", post(accept_book))
 		.route("/buyr", post(process_payment))
 		.route("/car/mult_upload", post(mult_upload))
 		.route("/user/tokens", post(query_token))

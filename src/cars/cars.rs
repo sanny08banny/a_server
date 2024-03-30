@@ -56,7 +56,7 @@ pub async fn handler() -> Json<Vec<Car>> {
 	Json(x)
 }
 
-pub async fn book(req_details: Json<BookingDetails>) -> StatusCode {
+pub async fn accept_book(req_details: Json<BookingDetails>) -> StatusCode {
 	let det = req_details.0;
 	if det.description == "book" {
 		let g = db_client().await;
