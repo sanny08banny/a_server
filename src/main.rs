@@ -1,6 +1,6 @@
 use crate::db_client::db_client;
 use axum::routing::{get, post, Router};
-use cars::cars::{accept_book, book, handler, mult_upload, Car};
+use cars::cars::{accept_book, handler, mult_upload, Car};
 use fcm_t::{fcm::req_ride, token::update_token};
 use image_server::image_handler;
 use payment_gateway::mpesa_payment_gateway::{call_back_url, process_payment};
