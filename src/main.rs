@@ -44,6 +44,7 @@ async fn main() {
 		.route("/token_update/:user_id/:token", get(update_token))
 		.route("/driver_response", post(fcm_t::token::driver_response))
 		.route("/search", post(search))
+		.route("/delete_user", post(users::users::delete_user))
 		.layer(CorsLayer::permissive());
 	axum::Server::bind(&addr.trim().parse().expect("Invalid address"))
 		.serve(app.into_make_service_with_connect_info::<SocketAddr>())

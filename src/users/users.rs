@@ -76,3 +76,7 @@ pub async fn change_category(j: Json<Value>) -> Json<Value> {
 	let p = json!({"user_id":id,"is_admin":false,"is_driver":false});
 	return Json(p);
 }
+
+pub async fn delete_user(j: Json<Value>)->StatusCode{
+	StatusCode::OK
+}
