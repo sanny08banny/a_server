@@ -18,7 +18,7 @@ pub struct Car {
 	pub available: bool,
 }
 
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize,Debug)]
 pub struct BookingDetails {
 	user_id: String,
 	car_id: String,
@@ -58,6 +58,7 @@ pub async fn handler() -> Json<Vec<Car>> {
 
 pub async fn accept_book(req_details: Json<BookingDetails>) -> StatusCode {
 	let det = req_details.0;
+        println!("det {:?}",det);
 	if det.description == "book" {
 		let g = db_client().await;
 		let y = format!("SELECT booking_tokens FROM car WHERE car_id='{}'", det.car_id);

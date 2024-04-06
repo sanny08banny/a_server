@@ -20,7 +20,8 @@ async fn send_notification(det: Value, category: &str) {
 	let db = db_client().await;
 	let client_id = det["client_id"].as_str().unwrap();
 	let recepient = det["recepient_id"].as_str().unwrap();
-
+        println!("client id: {:?}",client_id);
+        println!("recepient id: {:?}",recepient);
 	let client = fcm::Client::new();
 	let mut details: Value = json!({});
 	// get username from db
@@ -53,7 +54,7 @@ async fn send_notification(det: Value, category: &str) {
 	query = format!("SELECT notification_token FROM users WHERE user_id='{}'", recepient);
 	let res = db.query(query.as_str(), &[]).await.unwrap();
 	let token: String = res[0].get("notification_token");
-
+        println!("recepient notification token: {:?}", token);
 	let mut notification_builder = fcm::NotificationBuilder::new();
 	if category == "Driver" {
 		notification_builder.title("Ride request!");
