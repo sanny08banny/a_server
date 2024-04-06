@@ -78,5 +78,14 @@ pub async fn change_category(j: Json<Value>) -> Json<Value> {
 }
 
 pub async fn delete_user(j: Json<Value>)->StatusCode{
+	let g = db_client().await;
+	let j = j.0;
+	let email= j["email"].as_str().unwrap();
+	let pwd = j["password"].as_str().unwrap();
+	let q = format!("DELETE FROM users WHERE email='{}' AND password='{}'",email,pwd);
+	let y=g.execute(q.as_str(), &[]).await;
+	if y.is_err(){
+		return StatusCode::NOT_MODIFIED;
+	}
 	StatusCode::OK
 }
