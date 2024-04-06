@@ -11,7 +11,7 @@ pub struct User {
 	notification_id: String,
 }
 
-pub async fn create_user(user: Json<User>) {
+pub async fn create_user(user: Json<User>) ->StatusCode{
 	let g = db_client().await;
 	let user = user.0;
 	println!("{:?}", user);
@@ -25,7 +25,11 @@ pub async fn create_user(user: Json<User>) {
 		"INSERT INTO users (email,password,tokens,isadmin,isdriver,notification_token) VALUES ('{}','{}','{}','{}','{}','{}')",
 		email, password, r_tokens, is_admin, is_driver, notification_id
 	);
-	g.execute(q.as_str(), &[]).await.unwrap();
+	let res=g.execute(q.as_str(), &[]).await;
+	if res.is_err(){
+		return StatusCode::NOT_MODIFIED;
+	}
+	StatusCode::OK
 }
 
 pub async fn user_login(user: Json<User>) -> Result<Json<Value>, StatusCode> {
@@ -59,17 +63,29 @@ pub async fn change_category(j: Json<Value>) -> Json<Value> {
 	let category = j["category"].as_str().unwrap();
 	if category == "driver" {
 		let q = format!("UPDATE users SET isdriver=true WHERE user_id='{}'", id);
-		g.execute(q.as_str(), &[]).await.unwrap();
+		let query=g.execute(q.as_str(), &[]).await;
+		if query.is_err(){
+			let p = json!({"user_id":id,"is_driver":false});
+			return Json(p);
+		}
 		let p = json!({"user_id":id,"is_driver":true});
 		return Json(p);
 	} else if category == "admin" {
 		let q = format!("UPDATE users SET isadmin=true WHERE user_id='{}'", id);
-		g.execute(q.as_str(), &[]).await.unwrap();
+		let query=g.execute(q.as_str(), &[]).await;
+		if query.is_err(){
+			let p = json!({"user_id":id,"is_admin":false});
+			return Json(p);
+		}
 		let p = json!({"user_id":id,"is_admin":true});
 		return Json(p);
 	} else if category == "normal" {
 		let q = format!("UPDATE users SET isadmin=false,isdriver=false WHERE user_id='{}'", id);
-		g.execute(q.as_str(), &[]).await.unwrap();
+		let query=g.execute(q.as_str(), &[]).await;
+		if query.is_err(){
+			let p = json!({"user_id":id,"is_admin":false,"is_driver":false});
+			return Json(p);
+		}
 		let p = json!({"user_id":id,"is_admin":false,"is_driver":false});
 		return Json(p);
 	}
