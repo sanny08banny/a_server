@@ -43,7 +43,7 @@ impl MpesaPaymentProcessor {
 			party_a: phone_number.to_owned(),
 			party_b: merchant.business_short_code,
 			phone_number: phone_number.to_owned(),
-			call_back_url: "https://mydomain.com:4000/path".to_owned(),
+			call_back_url: "https://abiriapp.com/api/path".to_owned(),
 			account_reference: "We Mzee".to_owned(),
 			transaction_desc: description.to_owned(),
 		}
