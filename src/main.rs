@@ -21,6 +21,7 @@ mod search;
 mod tokens;
 mod users;
 mod verification;
+mod payment_result;
 use crate::search::search::search;
 
 #[tokio::main]
