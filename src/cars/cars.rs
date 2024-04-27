@@ -2,6 +2,7 @@ use std::fs;
 
 use axum::{extract::Multipart, Json};
 use hyper::StatusCode;
+use serde_json::Value;
 
 use crate::db_client;
 
@@ -177,4 +178,16 @@ pub async fn mult_upload(mut multipart: Multipart) {
 		car_id, images, model, admin_id, location, description, daily_price, daily_down_payment, available, token
 	);
 	g.execute(q.as_str(), &[]).await.unwrap();
+}
+
+pub async fn delete_car(car_details: Json<Value>)->StatusCode{
+    let car_id = car_details["car_id"].as_str().unwrap();
+	let owner_id = car_details["owner_id"].as_str().unwrap();
+	let g = db_client().await;
+	let q = format!("DELETE FROM car WHERE car_id='{}' AND owner_id='{}'", car_id, owner_id);
+	let x = g.execute(q.as_str(), &[]).await.unwrap();
+	if x == 0 {
+		return StatusCode::NOT_FOUND;
+	}
+	StatusCode::OK
 }
