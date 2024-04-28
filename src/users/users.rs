@@ -10,7 +10,6 @@ pub struct User {
 	password: String,
 	name: String,
 	notification_id: String,
-	phone_number: String,
 }
 
 pub async fn create_user(user: Json<User>) ->StatusCode{
@@ -24,10 +23,9 @@ pub async fn create_user(user: Json<User>) ->StatusCode{
 	let is_admin = false;
 	let is_driver = false;
 	let user_name = user.name;
-	let phone_number = user.phone_number;
 	let q = format!(
-		"INSERT INTO users (email,password,tokens,isadmin,isdriver,notification_token,user_name,user_phone) VALUES ('{}','{}','{}','{}','{}','{}','{}','{}')",
-		email, password, r_tokens, is_admin, is_driver, notification_id,user_name,phone_number
+		"INSERT INTO users (email,password,tokens,isadmin,isdriver,notification_token,user_name) VALUES ('{}','{}','{}','{}','{}','{}','{}')",
+		email, password, r_tokens, is_admin, is_driver, notification_id,user_name
 	);
 	let res=g.execute(q.as_str(), &[]).await;
 	if res.is_err(){
