@@ -28,13 +28,13 @@ async fn send_notification(det: Value, category: &str) {
 	let mut query = format!("SELECT user_name, user_phone FROM users WHERE user_id='{}'", client_id);
 	let res = db.query(query.as_str(), &[]).await.unwrap();
 	let user_name: String = res[0].get("user_name");
-	let user_phone: String = res[0].get("user_phone");
+	// let user_phone: String = res[0].get("user_phone");
 	if category == "Driver" {
 		details = json!(
 		{
 			"ride_id": client_id.to_owned()+"_"+recepient,
 			"user_name": user_name,
-			"user_phone": user_phone,
+			// "user_phone": user_phone,
 			"dest_lat": det["dest_lat"].as_f64().unwrap(),
 			"dest_lon": det["dest_lon"].as_f64().unwrap(),
 			"current_lat": det["current_lat"].as_f64().unwrap(),
@@ -46,7 +46,7 @@ async fn send_notification(det: Value, category: &str) {
 		{
 			"booking_id": client_id.to_owned()+"_"+recepient,
 			"user_name": user_name,
-			"user_phone": user_phone,
+			// "user_phone": user_phone,
 			"car_id": det["car_id"].as_str().unwrap(),
 			"client_id": client_id,
 		});
