@@ -16,6 +16,18 @@ pub async fn book_car(det: Json<Value>) -> Result<StatusCode, StatusCode> {
 	Ok(StatusCode::OK)
 }
 
+pub async fn ride_req_status(det: Json<Value>)->Result<StatusCode,StatusCode>{
+    let det=det.0;
+	send_notification(det,"").await;
+	Ok(StatusCode::OK)
+}
+
+pub async fn book_req_status(det: Json<Value>)->Result<StatusCode,StatusCode>{
+	let det=det.0;
+	send_notification(det,"").await;
+	Ok(StatusCode::OK)
+}
+
 async fn send_notification(det: Value, category: &str) {
 	let db = db_client().await;
 	let client_id = det["client_id"].as_str().unwrap();
@@ -50,6 +62,10 @@ async fn send_notification(det: Value, category: &str) {
 			"car_id": det["car_id"].as_str().unwrap(),
 			"client_id": client_id,
 		});
+	}else{
+		details=json!({
+			"notification":"Invalid category!"
+		});
 	}
 	query = format!("SELECT notification_token FROM users WHERE user_id='{}'", recepient);
 	let res = db.query(query.as_str(), &[]).await.unwrap();
@@ -64,6 +80,10 @@ async fn send_notification(det: Value, category: &str) {
 		notification_builder.title("Booking notification!");
 		notification_builder.body("User 1 has booked your car!");
 		notification_builder.tag("Booked car");
+	}else{
+		notification_builder.title("Invalid category!");
+		notification_builder.body("Invalid category!");
+		notification_builder.tag("Invalid category");
 	}
 	let notification = notification_builder.finalize();
 	let mut message_builder = fcm::MessageBuilder::new(
