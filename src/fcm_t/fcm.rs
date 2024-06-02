@@ -4,9 +4,11 @@ use fcm;
 use hyper::StatusCode;
 use serde_json::{json, Value};
 
-pub async fn req_ride(det: Json<Value>) -> Result<StatusCode, StatusCode> {
+pub async fn req_ride(det: Json<Vec<Value>>) -> Result<StatusCode, StatusCode> {
 	let det = det.0;
-	send_notification(det, "Driver").await;
+	for i in 0..det.len() {
+		send_notification(det[i].clone(), "Driver").await;
+	}
 	Ok(StatusCode::OK)
 }
 
@@ -16,17 +18,17 @@ pub async fn book_car(det: Json<Value>) -> Result<StatusCode, StatusCode> {
 	Ok(StatusCode::OK)
 }
 
-pub async fn ride_req_status(det: Json<Value>)->Result<StatusCode,StatusCode>{
-    let det=det.0;
-	send_notification(det,"").await;
-	Ok(StatusCode::OK)
-}
+// pub async fn ride_req_status(det: Json<Value>)->Result<StatusCode,StatusCode>{
+//     let det=det.0;
+// 	send_notification(det,"").await;
+// 	Ok(StatusCode::OK)
+// }
 
-pub async fn book_req_status(det: Json<Value>)->Result<StatusCode,StatusCode>{
-	let det=det.0;
-	send_notification(det,"").await;
-	Ok(StatusCode::OK)
-}
+// pub async fn book_req_status(det: Json<Value>)->Result<StatusCode,StatusCode>{
+// 	let det=det.0;
+// 	send_notification(det,"").await;
+// 	Ok(StatusCode::OK)
+// }
 
 async fn send_notification(det: Value, category: &str) {
 	let db = db_client().await;
@@ -72,13 +74,16 @@ async fn send_notification(det: Value, category: &str) {
 	let token: String = res[0].get("notification_token");
         println!("recepient notification token: {:?}", token);
 	let mut notification_builder = fcm::NotificationBuilder::new();
+	let mut message=String::new();
 	if category == "Driver" {
 		notification_builder.title("Ride request!");
-		notification_builder.body("User 1 has requested a ride!");
+		message=format!("{} has requested a ride!", user_name);
+		notification_builder.body(message.as_str());
 		notification_builder.tag("Ride req");
 	} else if category == "Owner" {
 		notification_builder.title("Booking notification!");
-		notification_builder.body("User 1 has booked your car!");
+		message=format!("{} has booked your car!", user_name);
+		notification_builder.body(message.as_str());
 		notification_builder.tag("Booked car");
 	}else{
 		notification_builder.title("Invalid category!");
