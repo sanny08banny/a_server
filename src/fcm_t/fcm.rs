@@ -2,19 +2,20 @@ use crate::db_client::db_client;
 use axum::Json;
 use fcm;
 use hyper::StatusCode;
+use serde::de;
 use serde_json::{json, Value};
 
 pub async fn req_ride(det: Json<Vec<Value>>) -> Result<StatusCode, StatusCode> {
 	let det = det.0;
 	for i in 0..det.len() {
-		send_notification(det[i].clone(), "Driver").await;
+		start_notification(det[i].clone(), "Driver").await;
 	}
 	Ok(StatusCode::OK)
 }
 
 pub async fn book_car(det: Json<Value>) -> Result<StatusCode, StatusCode> {
 	let det = det.0;
-	send_notification(det, "Owner").await;
+	start_notification(det, "Owner").await;
 	Ok(StatusCode::OK)
 }
 
@@ -30,24 +31,30 @@ pub async fn book_car(det: Json<Value>) -> Result<StatusCode, StatusCode> {
 // 	Ok(StatusCode::OK)
 // }
 
-async fn send_notification(det: Value, category: &str) {
+async fn start_notification(det: Value, category: &str) {
 	let db = db_client().await;
 	let client_id = det["client_id"].as_str().unwrap();
 	let recepient = det["recepient_id"].as_str().unwrap();
         println!("client id: {:?}",client_id);
         println!("recepient id: {:?}",recepient);
-	let client = fcm::Client::new();
 	let mut details: Value = json!({});
 	// get username from db
 	let mut query = format!("SELECT user_name, user_phone FROM users WHERE user_id='{}'", client_id);
 	let res = db.query(query.as_str(), &[]).await.unwrap();
 	let user_name: String = res[0].get("user_name");
 	// let user_phone: String = res[0].get("user_phone");
+    
+	query = format!("SELECT notification_token FROM users WHERE user_id='{}'", client_id);
+	let res = db.query(query.as_str(), &[]).await.unwrap();
+	let client_token: String = res[0].get("notification_token");
+
+
 	if category == "Driver" {
 		details = json!(
 		{
 			"ride_id": client_id.to_owned()+"_"+recepient,
 			"user_name": user_name,
+			"client_token": client_token,
 			// "user_phone": user_phone,
 			"dest_lat": det["dest_lat"].as_f64().unwrap(),
 			"dest_lon": det["dest_lon"].as_f64().unwrap(),
@@ -73,6 +80,11 @@ async fn send_notification(det: Value, category: &str) {
 	let res = db.query(query.as_str(), &[]).await.unwrap();
 	let token: String = res[0].get("notification_token");
         println!("recepient notification token: {:?}", token);
+	send_notification(category, user_name.as_str(), token.as_str(), details).await;
+}
+
+pub async fn send_notification(category: &str, user_name: &str, token: &str, mut details:Value){
+	let client = fcm::Client::new();
 	let mut notification_builder = fcm::NotificationBuilder::new();
 	let mut message=String::new();
 	if category == "Driver" {
@@ -85,6 +97,10 @@ async fn send_notification(det: Value, category: &str) {
 		message=format!("{} has booked your car!", user_name);
 		notification_builder.body(message.as_str());
 		notification_builder.tag("Booked car");
+	}else if category == "taxi_client" {
+		notification_builder.title("Request accepted");
+		notification_builder.body("we found a driver for you!");
+		notification_builder.tag("Request accepted");
 	}else{
 		notification_builder.title("Invalid category!");
 		notification_builder.body("Invalid category!");
