@@ -32,7 +32,7 @@ pub async fn driver_response(res:Json<Value>)->Result<StatusCode,StatusCode>
 		"color":"green",
 		"model":"Toyota",
 	});
-    send_notification("taxi_client","",client_token,details).await;
+    send_notification("taxi_client","",&client_token,details).await;
     println!("{} {}", client_id, status);
 return Ok(StatusCode::OK);
 }
