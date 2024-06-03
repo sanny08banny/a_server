@@ -21,7 +21,12 @@ pub async fn driver_response(res:Json<Value>)->Result<StatusCode,StatusCode>
     let client_id = res["client_id"].as_str().unwrap();
     let status = res["status"].as_str().unwrap();
     let driver_id = res["driver_id"].as_str().unwrap();
-	let client_token = res["notification_id"].as_str().unwrap();
+	// let client_token = res["notification_id"].as_str().unwrap();
+	let db = db_client().await;
+	let query = format!("SELECT notification_token FROM users WHERE user_id='{}'", client_id);
+	let res = db.query(query.as_str(), &[]).await.unwrap();
+	let client_token: String = res[0].get("notification_token");
+
 	let details = json!({
 		"plate_number": "KCA 123",
 		"color":"green",

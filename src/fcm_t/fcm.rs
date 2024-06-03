@@ -44,9 +44,9 @@ async fn start_notification(det: Value, category: &str) {
 	let user_name: String = res[0].get("user_name");
 	// let user_phone: String = res[0].get("user_phone");
     
-	query = format!("SELECT notification_token FROM users WHERE user_id='{}'", client_id);
-	let res = db.query(query.as_str(), &[]).await.unwrap();
-	let client_token: String = res[0].get("notification_token");
+	// query = format!("SELECT notification_token FROM users WHERE user_id='{}'", client_id);
+	// let res = db.query(query.as_str(), &[]).await.unwrap();
+	// let client_token: String = res[0].get("notification_token");
 
 
 	if category == "Driver" {
@@ -54,7 +54,7 @@ async fn start_notification(det: Value, category: &str) {
 		{
 			"ride_id": client_id.to_owned()+"_"+recepient,
 			"user_name": user_name,
-			"client_token": client_token,
+			// "client_token": client_token,
 			// "user_phone": user_phone,
 			"dest_lat": det["dest_lat"].as_f64().unwrap(),
 			"dest_lon": det["dest_lon"].as_f64().unwrap(),
