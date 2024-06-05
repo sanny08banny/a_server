@@ -87,7 +87,8 @@ pub async fn accept_book(req_details: Json<BookingDetails>) -> StatusCode {
 	return StatusCode::NOT_FOUND;
 }
 
-pub async fn mult_upload(mut multipart: Multipart) {
+pub async fn mult_upload(mut multipart: Multipart)->StatusCode
+ {
 	let mut user_id = String::new();
 	let mut car_id = String::new();
 	let mut model = String::new();
@@ -191,12 +192,12 @@ pub async fn mult_upload(mut multipart: Multipart) {
 	for (i, x) in r.iter().enumerate() {
 		images[i] = format!("'{}'", x);
 	}
+	if category == "car_hire"{
 	let images = format!("ARRAY[{}]", images.join(","));
 	println!("{}", images);
 	let token = 10.0;
 	let daily_price: f64 = daily_price.parse().unwrap();
 	let daily_down_payment: f64 = daily_down_payment.parse().unwrap();
-	if category == "car_hire"{
 	let q = format!(
 		"INSERT INTO car (car_id, car_images, model, owner_id, location, description, daily_amount, daily_downpayment_amt, available,booking_tokens)
         VALUES
@@ -205,7 +206,7 @@ pub async fn mult_upload(mut multipart: Multipart) {
 	);
 	g.execute(q.as_str(), &[]).await.unwrap();
 }
-
+   StatusCode::OK
 }
 
 pub async fn delete_car(car_details: Json<Value>)->StatusCode{
