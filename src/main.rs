@@ -46,6 +46,7 @@ async fn main() {
 		.route("/api/search", post(search))
 		.route("/api/delete_user", post(users::users::delete_user))
 		.route("/api/delete_car", post(cars::cars::delete_car))
+		.route("/api/init_taxi", post(cars::taxi::init_taxi))
 		// .route("/api/ride_req_status", post(fcm_t::fcm::ride_req_status))
 		// .route("/api/book_req_status", post(fcm_t::fcm::book_req_status))
 		.layer(CorsLayer::permissive());
