@@ -88,7 +88,7 @@ pub async fn accept_book(req_details: Json<BookingDetails>) -> StatusCode {
 }
 
 pub async fn mult_upload(mut multipart: Multipart) {
-	let mut admin_id = String::new();
+	let mut user_id = String::new();
 	let mut car_id = String::new();
 	let mut model = String::new();
 	let mut location = String::new();
@@ -99,17 +99,27 @@ pub async fn mult_upload(mut multipart: Multipart) {
 	let mut images: Vec<String> = Vec::new();
 	let mut img_path = String::new();
 	let mut index = 0;
+	let mut category = String::new();
 	let g = db_client().await;
 	while let Some(field) = multipart.next_field().await.unwrap() {
 		let name = field.name().unwrap().to_string();
 		println!("{:?}", name);
 		match name.as_str() {
-			"admin_id" => {
-				admin_id = field.text().await.unwrap().replace("\"", "");
+			"category" => {
+				category = field.text().await.unwrap().replace("\"", "");
+				if category == "taxi"{
+					img_path ="images/taxi/".to_owned();
+				}
+				else if category == "car_hire"{
+					img_path ="images/car_hire/".to_owned();
+				}
+			}
+			"user_id" => {
+				user_id = field.text().await.unwrap().replace("\"", "");
 			}
 			"car_id" => {
 				car_id = field.text().await.unwrap().replace("\"", "");
-				img_path = format!("images/{}/{}/", admin_id, car_id);
+				img_path = img_path+&user_id+"/"+ &car_id+"/";
 				match fs::create_dir_all(&img_path) {
 					Ok(_) => {}
 					Err(e) => {
@@ -134,6 +144,21 @@ pub async fn mult_upload(mut multipart: Multipart) {
 			}
 			"available" => {
 				available = field.text().await.unwrap().parse().unwrap();
+			}
+			"inspection_report_expiry" => {
+                print!("inspection_report_expiry {:?}",field.text().await.unwrap());
+			}
+			"inspection_report" => {
+                print!("inspection_report");
+			}
+			"insurance_payment_plan" => {
+				print!("insurance_payment_plan, {:?}",field.text().await.unwrap());
+			}
+			"insurance_expiry" => {
+				print!("insurance_expiry, {:?}",field.text().await.unwrap());
+			}
+			"insurance" => {
+				print!("insurance");
 			}
 			_ => {
 				let mut img_file_format = match field.content_type() {
@@ -171,13 +196,16 @@ pub async fn mult_upload(mut multipart: Multipart) {
 	let token = 10.0;
 	let daily_price: f64 = daily_price.parse().unwrap();
 	let daily_down_payment: f64 = daily_down_payment.parse().unwrap();
+	if category == "car_hire"{
 	let q = format!(
 		"INSERT INTO car (car_id, car_images, model, owner_id, location, description, daily_amount, daily_downpayment_amt, available,booking_tokens)
         VALUES
           ('{}', {}, '{}', '{}', '{}', '{}', {}, {}, {},{})",
-		car_id, images, model, admin_id, location, description, daily_price, daily_down_payment, available, token
+		car_id, images, model, user_id, location, description, daily_price, daily_down_payment, available, token
 	);
 	g.execute(q.as_str(), &[]).await.unwrap();
+}
+
 }
 
 pub async fn delete_car(car_details: Json<Value>)->StatusCode{
