@@ -28,7 +28,7 @@ async fn main() {
 	let addr = "0.0.0.0:4000";
 	let app = Router::new()
 		.route("/api/cars", get(handler))
-		.route("/api/car/:owner_id/:car_id/:file_name", get(image_handler))
+		.route("/api/car/:category/:owner_id/:car_id/:file_name", get(image_handler))
 		.route("/api/accept_book", post(accept_book))
 		.route("/api/buyr", post(process_payment))
 		.route("/api/car/mult_upload", post(mult_upload))
