@@ -6,8 +6,8 @@ use std::{
 use axum::{extract::Path, response::Response};
 use hyper::Body;
 
-pub async fn image_handler(Path((category,owner_id, car_id, image)): Path<(String,String, String, String)>) -> Response<Body> {
-	let path = format!("images/{}/{}/{}/{}", category,owner_id, car_id, image);
+pub async fn image_handler(Path((category,user_id, car_id, image)): Path<(String,String, String, String)>) -> Response<Body> {
+	let path = format!("images/{}/{}/{}/{}", category,user_id, car_id, image);
 	let h = File::open(path).expect("file not found");
 	let mut buf_reader = BufReader::new(h);
 	let mut contents = Vec::new();

@@ -11,11 +11,12 @@ pub async fn init_taxi(det:Json<Value>)->Json<String>
   let color=det.get("color").unwrap().to_string();
   let manufacturer=det.get("manufacturer").unwrap().to_string();
   let plate_number=det.get("plate_number").unwrap().to_string();
+  let category = det.get("category").unwrap().to_string();
   let taxi_id=ecryption_engine::CUSTOM_ENGINE.encode(format!("{}{}{}{}",driver_id,plate_number,model,color));
   let q = format!("
   INSERT INTO taxi 
-  (taxi_id,driver_id,model,color,plate_number,manufacturer)
-   VALUES ('{taxi_id}','{driver_id}','{model}','{color}','{plate_number}','{manufacturer}')",);
+  (taxi_id,driver_id,model,color,plate_number,category,manufacturer)
+   VALUES ('{taxi_id}','{driver_id}','{model}','{color}','{plate_number}','{category}','{manufacturer}')",);
   let g = db_client().await;
   g.execute(&q, &[]).await.unwrap();
   return  Json(taxi_id);
