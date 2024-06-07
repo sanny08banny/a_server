@@ -161,6 +161,18 @@ pub async fn mult_upload(mut multipart: Multipart)->StatusCode
 			"insurance" => {
 				print!("insurance");
 			}
+			"driving_licence"=>{
+				print!("driving_licence");
+			}
+			"psv_licence"=>{
+                print!("psv_licence");
+			}
+			"national_id_front"=>{
+                print!("national_id_front");
+			}
+			"national_id_back"=>{
+                print!("national_id_back");
+			}
 			_ => {
 				let mut img_file_format = match field.content_type() {
 					Some(x) => x,
