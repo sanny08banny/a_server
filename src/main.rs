@@ -2,7 +2,7 @@ use crate::db_client::db_client;
 use axum::routing::{get, post, Router};
 use cars::cars::{accept_book, handler, mult_upload, Car};
 use fcm_t::{fcm::req_ride, token::update_token};
-use image_server::image_handler;
+use file_server::file_handler;
 use payment_gateway::mpesa_payment_gateway::{call_back_url, process_payment};
 use review::review::{car_review, post_review};
 use std::net::SocketAddr;
@@ -13,7 +13,7 @@ mod cars;
 mod db_client;
 mod ecryption_engine;
 mod fcm_t;
-mod image_server;
+mod file_server;
 mod location;
 mod payment_gateway;
 mod review;
@@ -28,7 +28,7 @@ async fn main() {
 	let addr = "0.0.0.0:4000";
 	let app = Router::new()
 		.route("/api/cars", get(handler))
-		.route("/api/car/:category/:owner_id/:car_id/:file_name", get(image_handler))
+		.route("/api/car/:parent_folder/:category/:owner_id/:car_id/:file_name", get(file_handler))
 		.route("/api/accept_book", post(accept_book))
 		.route("/api/buyr", post(process_payment))
 		.route("/api/car/mult_upload", post(mult_upload))
@@ -47,6 +47,7 @@ async fn main() {
 		.route("/api/delete_user", post(users::users::delete_user))
 		.route("/api/delete_car", post(cars::cars::delete_car))
 		.route("/api/init_taxi", post(cars::taxi::init_taxi))
+		.route("/api/taxi_details", post(cars::taxi::taxi_details))
 		// .route("/api/ride_req_status", post(fcm_t::fcm::ride_req_status))
 		// .route("/api/book_req_status", post(fcm_t::fcm::book_req_status))
 		.layer(CorsLayer::permissive());
