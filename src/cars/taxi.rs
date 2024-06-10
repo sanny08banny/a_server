@@ -28,22 +28,23 @@ pub async fn taxi_details(det:Json<Value>)->Json<Value>{
   let q = format!("SELECT * FROM taxi WHERE taxi_id = '{}'",taxi_id);
   let g = db_client().await;
   let rows = g.query(&q, &[]).await.unwrap();
-  let template = json!(
+  let driver_id: String = rows[0].get("driver_id");
+  let category: String = rows[0].get("category");
+  let model: String = rows[0].get("model");
+  let color: String = rows[0].get("color");
+  let plate_number: String = rows[0].get("plate_number");
+  let manufacturer: String = rows[0].get("manufacturer");
+  let taxi_images: Vec<String> = rows[0].get("image_paths");
+  let res_body = json!(
     {
-      "driver_id": "",
-      "model": "",
-      "color": "",
-      "plate_number": "",
-      "manufacturer": "",
-      "national_id_front": "national_id_front_filepath",
-      "national_id_back": "national_id_back_filepath",
-      "driving_license_front": "driving_license_front_filepath",
-      "driving_license_back": "driving_license_back_filepath",
-      "insurance": "insurance_filepath",
-      "inspection_report": "inspection_report_filepath",
-      "psv_license": "psv_licence_filepath",
-      "taxi_images": ["imgpath1","imgpath2","imgpath3"],
+      "driver_id": driver_id,
+      "model": model,
+      "category": category,
+      "color": color,
+      "plate_number": plate_number,
+      "manufacturer": manufacturer,
+      "taxi_images": taxi_images,
     }
   );
-  return Json(template);
+  return Json(res_body);
 }
