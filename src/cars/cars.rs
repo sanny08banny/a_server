@@ -179,17 +179,7 @@ pub async fn mult_upload(mut multipart: Multipart) -> StatusCode {
 				print!("national_id_back");
 			}
 			_ => {
-				// let img_file_format = "jpeg".to_owned();
-				// match field.content_type() {
-				// 	Some(x) => x,
-				// 	None => "image/png",
-				// }
-				// .to_owned();
-				// remove image/ from the content type
-				// img_file_format = img_file_format.replace("image/", "");
-				// img_file_format = img_file_format.replace("*", "jpeg");
 				let img_name = format!("img_{}.{}", index, "jpeg");
-				// println!("file format {}", img_file_format);
 				let img = image::load_from_memory(&field.bytes().await.unwrap()).unwrap();
 				file_path.push_str(&img_name);
 				match img.save(&file_path) {
@@ -224,8 +214,9 @@ pub async fn mult_upload(mut multipart: Multipart) -> StatusCode {
 		);
 		g.execute(q.as_str(), &[]).await.unwrap();
 	} else if category == "taxi" {
-		let q = format!("INSERT INTO taxi (image_paths) VALUES ({})", images);
+		let q = format!("INSERT INTO taxi WHERE taxi_id='{}' (image_paths) VALUES ({})",car_id, images);
 		g.execute(q.as_str(), &[]).await.unwrap();
+		
 	}
 	StatusCode::OK
 }
