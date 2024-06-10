@@ -24,7 +24,7 @@ pub async fn init_taxi(det:Json<Value>)->Json<String>
 
 pub async fn taxi_details(det:Json<Value>)->Json<Value>{
   let det = det.0;
-  let taxi_id = det.get("taxi_id").unwrap().to_string();
+  let taxi_id = det.get("taxi_id").unwrap().to_string().replace("\\\"", "");
   println!("taxi_id {:?}",taxi_id);
   let q = format!("SELECT * FROM taxi WHERE taxi_id='{}'",taxi_id);
   let g = db_client().await;
