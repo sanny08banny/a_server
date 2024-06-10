@@ -6,12 +6,12 @@ use crate::{db_client, ecryption_engine};
 pub async fn init_taxi(det:Json<Value>)->Json<String>
 {
   let det=det.0;
-  let driver_id = det.get("user_id").unwrap().to_string();
-  let model=det.get("model").unwrap().to_string();
-  let color=det.get("color").unwrap().to_string();
-  let manufacturer=det.get("manufacturer").unwrap().to_string();
-  let plate_number=det.get("plate_number").unwrap().to_string();
-  let category = det.get("category").unwrap().to_string();
+  let driver_id = det.get("user_id").unwrap().to_string().replace("\"", "");
+  let model=det.get("model").unwrap().to_string().replace("\"", "");
+  let color=det.get("color").unwrap().to_string().replace("\"", "");
+  let manufacturer=det.get("manufacturer").unwrap().to_string().replace("\"", "");
+  let plate_number=det.get("plate_number").unwrap().to_string().replace("\"", "");
+  let category = det.get("category").unwrap().to_string().replace("\"", "");
   let taxi_id=ecryption_engine::CUSTOM_ENGINE.encode(format!("{}{}{}{}",driver_id,plate_number,model,color));
   let q = format!("
   INSERT INTO taxi 
