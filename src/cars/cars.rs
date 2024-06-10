@@ -214,7 +214,7 @@ pub async fn mult_upload(mut multipart: Multipart) -> StatusCode {
 		);
 		g.execute(q.as_str(), &[]).await.unwrap();
 	} else if category == "taxi" {
-		let q = format!("INSERT INTO taxi WHERE taxi_id='{}' (image_paths) VALUES ({})",car_id, images);
+		let q = format!("UPDATE taxi SET image_paths={} WHERE taxi_id='{}'",images,car_id);
 		g.execute(q.as_str(), &[]).await.unwrap();
 		
 	}
