@@ -28,9 +28,9 @@ pub async fn taxi_details(det:Json<Value>)->Json<Value>{
 
   let taxi_id = det.get("taxi_id").unwrap().to_string().replace("\"", "");
   println!("taxi_id {:?}",taxi_id);
-  let q = format!("SELECT * FROM taxi WHERE taxi_id={}",taxi_id);
+  // let q = format!("SELECT * FROM taxi WHERE taxi_id='{}'",taxi_id);
   let g = db_client().await;
-  let rows = g.query(&q, &[]).await.unwrap();
+  let rows = g.query("SELECT * FROM taxi WHERE taxi_id=$1", &[&taxi_id]).await.unwrap();
   if rows.is_empty() {
     return Json(json!({"error": "taxi not found"}));
   }
