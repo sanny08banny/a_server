@@ -87,25 +87,25 @@ pub async fn send_notification(category: &str, user_name: &str, token: &str, mut
 	let client = fcm::Client::new();
 	let mut notification_builder = fcm::NotificationBuilder::new();
 	let mut message=String::new();
-	if category == "Driver" {
-		notification_builder.title("Ride request!");
-		message=format!("{} has requested a ride!", user_name);
-		notification_builder.body(message.as_str());
-		notification_builder.tag("Ride req");
-	} else if category == "Owner" {
-		notification_builder.title("Booking notification!");
-		message=format!("{} has booked your car!", user_name);
-		notification_builder.body(message.as_str());
-		notification_builder.tag("Booked car");
-	}else if category == "taxi_client" {
-		notification_builder.title("Request accepted");
-		notification_builder.body("we found a driver for you!");
-		notification_builder.tag("Request accepted");
-	}else{
-		notification_builder.title("Invalid category!");
-		notification_builder.body("Invalid category!");
-		notification_builder.tag("Invalid category");
-	}
+	// if category == "Driver" {
+	// 	notification_builder.title("Ride request!");
+	// 	message=format!("{} has requested a ride!", user_name);
+	// 	notification_builder.body(message.as_str());
+	// 	notification_builder.tag("Ride req");
+	// } else if category == "Owner" {
+	// 	notification_builder.title("Booking notification!");
+	// 	message=format!("{} has booked your car!", user_name);
+	// 	notification_builder.body(message.as_str());
+	// 	notification_builder.tag("Booked car");
+	// }else if category == "taxi_client" {
+	// 	notification_builder.title("Request accepted");
+	// 	notification_builder.body("we found a driver for you!");
+	// 	notification_builder.tag("Request accepted");
+	// }else{
+	// 	notification_builder.title("Invalid category!");
+	// 	notification_builder.body("Invalid category!");
+	// 	notification_builder.tag("Invalid category");
+	// }
 	let notification = notification_builder.finalize();
 	let mut message_builder = fcm::MessageBuilder::new(
 		"AAAA1rzD5J4:APA91bEVDhK6QTL835XVuXPEEA0mbtV1q37zzZeTd0R7w2wHwyh-QyEjYP1CqZ2Jv6GKiSbuOrdLVi62TAThdyy4uPK4rYuphOLQPX_pfsx-l98jUmNPp6l_H7zCD_Jlq2i2-UZVlSXm",
