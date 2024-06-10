@@ -1,6 +1,7 @@
-use std::fs;
+use std::{fs, io::Write};
 
 use axum::{extract::Multipart, Json};
+use chrono::format;
 use hyper::StatusCode;
 use serde_json::Value;
 
@@ -19,7 +20,7 @@ pub struct Car {
 	pub available: bool,
 }
 
-#[derive(serde::Deserialize,Debug)]
+#[derive(serde::Deserialize, Debug)]
 pub struct BookingDetails {
 	user_id: String,
 	car_id: String,
@@ -59,7 +60,7 @@ pub async fn handler() -> Json<Vec<Car>> {
 
 pub async fn accept_book(req_details: Json<BookingDetails>) -> StatusCode {
 	let det = req_details.0;
-        println!("det {:?}",det);
+	println!("det {:?}", det);
 	if det.description == "book" {
 		let g = db_client().await;
 		let y = format!("SELECT booking_tokens FROM car WHERE car_id='{}'", det.car_id);
@@ -87,8 +88,7 @@ pub async fn accept_book(req_details: Json<BookingDetails>) -> StatusCode {
 	return StatusCode::NOT_FOUND;
 }
 
-pub async fn mult_upload(mut multipart: Multipart)->StatusCode
- {
+pub async fn mult_upload(mut multipart: Multipart) -> StatusCode {
 	let mut user_id = String::new();
 	let mut car_id = String::new();
 	let mut model = String::new();
@@ -98,7 +98,7 @@ pub async fn mult_upload(mut multipart: Multipart)->StatusCode
 	let mut daily_down_payment = String::new();
 	let mut available = true;
 	let mut images: Vec<String> = Vec::new();
-	let mut img_path = String::new();
+	let mut file_path = String::new();
 	let mut index = 0;
 	let mut category = String::new();
 	let g = db_client().await;
@@ -108,11 +108,10 @@ pub async fn mult_upload(mut multipart: Multipart)->StatusCode
 		match name.as_str() {
 			"category" => {
 				category = field.text().await.unwrap().replace("\"", "");
-				if category == "taxi"{
-					img_path ="images/taxi/".to_owned();
-				}
-				else if category == "car_hire"{
-					img_path ="images/car_hire/".to_owned();
+				if category == "taxi" {
+					file_path = "images/taxi/".to_owned();
+				} else if category == "car_hire" {
+					file_path = "images/car_hire/".to_owned();
 				}
 			}
 			"user_id" => {
@@ -120,8 +119,8 @@ pub async fn mult_upload(mut multipart: Multipart)->StatusCode
 			}
 			"car_id" => {
 				car_id = field.text().await.unwrap().replace("\"", "");
-				img_path = img_path+&user_id+"/"+ &car_id+"/";
-				match fs::create_dir_all(&img_path) {
+				file_path = file_path + &user_id + "/" + &car_id + "/";
+				match fs::create_dir_all(&file_path) {
 					Ok(_) => {}
 					Err(e) => {
 						println!("failed to create directories {}", e)
@@ -147,46 +146,53 @@ pub async fn mult_upload(mut multipart: Multipart)->StatusCode
 				available = field.text().await.unwrap().parse().unwrap();
 			}
 			"inspection_report_expiry" => {
-                print!("inspection_report_expiry {:?}",field.text().await.unwrap());
+				print!("inspection_report_expiry {:?}", field.text().await.unwrap());
 			}
 			"inspection_report" => {
-                print!("inspection_report");
+				save_file(&file_path, "inspection_report.jpeg", &field.bytes().await.unwrap());
+				print!("inspection_report");
 			}
 			"insurance_payment_plan" => {
-				print!("insurance_payment_plan, {:?}",field.text().await.unwrap());
+				print!("insurance_payment_plan, {:?}", field.text().await.unwrap());
 			}
 			"insurance_expiry" => {
-				print!("insurance_expiry, {:?}",field.text().await.unwrap());
+				print!("insurance_expiry, {:?}", field.text().await.unwrap());
 			}
 			"insurance" => {
+				save_file(&file_path, "insurance.jpeg", &field.bytes().await.unwrap());
 				print!("insurance");
 			}
-			"driving_licence"=>{
+			"driving_licence" => {
+				save_file(&file_path, "driving_licence.jpeg", &field.bytes().await.unwrap());
 				print!("driving_licence");
 			}
-			"psv_licence"=>{
-                print!("psv_licence");
+			"psv_licence" => {
+				save_file(&file_path, "psv_licence.jpeg", &field.bytes().await.unwrap());
+				print!("psv_licence");
 			}
-			"national_id_front"=>{
-                print!("national_id_front");
+			"national_id_front" => {
+				save_file(&file_path, "national_id_front.jpeg", &field.bytes().await.unwrap());
+				print!("national_id_front");
 			}
-			"national_id_back"=>{
-                print!("national_id_back");
+			"national_id_back" => {
+				save_file(&file_path, "national_id_back.jpeg", &field.bytes().await.unwrap());
+				print!("national_id_back");
 			}
 			_ => {
-				let mut img_file_format = match field.content_type() {
-					Some(x) => x,
-					None => "image/png",
-				}
-				.to_owned();
+				// let img_file_format = "jpeg".to_owned();
+				// match field.content_type() {
+				// 	Some(x) => x,
+				// 	None => "image/png",
+				// }
+				// .to_owned();
 				// remove image/ from the content type
-				img_file_format = img_file_format.replace("image/", "");
-				img_file_format = img_file_format.replace("*", "jpeg");
-				let img_name = format!("img_{}.{}", index, img_file_format);
-				println!("file format {}", img_file_format);
+				// img_file_format = img_file_format.replace("image/", "");
+				// img_file_format = img_file_format.replace("*", "jpeg");
+				let img_name = format!("img_{}.{}", index, "jpeg");
+				// println!("file format {}", img_file_format);
 				let img = image::load_from_memory(&field.bytes().await.unwrap()).unwrap();
-				img_path.push_str(&img_name);
-				match img.save(&img_path) {
+				file_path.push_str(&img_name);
+				match img.save(&file_path) {
 					Ok(_) => {
 						index += 1;
 					}
@@ -194,9 +200,9 @@ pub async fn mult_upload(mut multipart: Multipart)->StatusCode
 						println!("Failed to save image: {}", e)
 					}
 				}
-				println!("Length of `{}` ", img_path);
+				println!("Length of `{}` ", file_path);
 				images.push(img_name.clone());
-				img_path = img_path.replace(&img_name, "");
+				file_path = file_path.replace(&img_name, "");
 			}
 		}
 	}
@@ -204,25 +210,34 @@ pub async fn mult_upload(mut multipart: Multipart)->StatusCode
 	for (i, x) in r.iter().enumerate() {
 		images[i] = format!("'{}'", x);
 	}
-	if category == "car_hire"{
 	let images = format!("ARRAY[{}]", images.join(","));
-	println!("{}", images);
-	let token = 10.0;
-	let daily_price: f64 = daily_price.parse().unwrap();
-	let daily_down_payment: f64 = daily_down_payment.parse().unwrap();
-	let q = format!(
-		"INSERT INTO car (car_id, car_images, model, owner_id, location, description, daily_amount, daily_downpayment_amt, available,booking_tokens)
+	if category == "car_hire" {
+		println!("{}", images);
+		let token = 10.0;
+		let daily_price: f64 = daily_price.parse().unwrap();
+		let daily_down_payment: f64 = daily_down_payment.parse().unwrap();
+		let q = format!(
+			"INSERT INTO car (car_id, car_images, model, owner_id, location, description, daily_amount, daily_downpayment_amt, available,booking_tokens)
         VALUES
           ('{}', {}, '{}', '{}', '{}', '{}', {}, {}, {},{})",
-		car_id, images, model, user_id, location, description, daily_price, daily_down_payment, available, token
-	);
-	g.execute(q.as_str(), &[]).await.unwrap();
-}
-   StatusCode::OK
+			car_id, images, model, user_id, location, description, daily_price, daily_down_payment, available, token
+		);
+		g.execute(q.as_str(), &[]).await.unwrap();
+	} else if category == "taxi" {
+		let q = format!("INSERT INTO taxi (image_paths) VALUES ({})", images);
+		g.execute(q.as_str(), &[]).await.unwrap();
+	}
+	StatusCode::OK
 }
 
-pub async fn delete_car(car_details: Json<Value>)->StatusCode{
-    let car_id = car_details["car_id"].as_str().unwrap();
+fn save_file(parent_dir_path: &str, filename: &str, data: &[u8]) {
+	let path = format!("{}{}", parent_dir_path, filename);
+	let mut file = fs::File::create(path).unwrap();
+	file.write_all(data).unwrap();
+}
+
+pub async fn delete_car(car_details: Json<Value>) -> StatusCode {
+	let car_id = car_details["car_id"].as_str().unwrap();
 	let owner_id = car_details["owner_id"].as_str().unwrap();
 	let g = db_client().await;
 	let q = format!("DELETE FROM car WHERE car_id='{}' AND owner_id='{}'", car_id, owner_id);
