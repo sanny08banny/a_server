@@ -48,8 +48,8 @@ async fn main() {
 		.route("/api/delete_car", post(cars::cars::delete_car))
 		.route("/api/init_taxi", post(cars::taxi::init_taxi))
 		.route("/api/taxi_details", post(cars::taxi::taxi_details))
-		// .route("/api/ride_req_status", post(fcm_t::fcm::ride_req_status))
-		// .route("/api/book_req_status", post(fcm_t::fcm::book_req_status))
+		.route("/api/ride_req_status", post(fcm_t::fcm::ride_req_status))
+		.route("/api/book_req_status", post(fcm_t::fcm::book_req_status))
 		.layer(CorsLayer::permissive());
 	axum::Server::bind(&addr.trim().parse().expect("Invalid address"))
 		.serve(app.into_make_service_with_connect_info::<SocketAddr>())

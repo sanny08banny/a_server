@@ -2,7 +2,6 @@ use crate::db_client::db_client;
 use axum::Json;
 use fcm;
 use hyper::StatusCode;
-use serde::de;
 use serde_json::{json, Value};
 
 pub async fn req_ride(det: Json<Vec<Value>>) -> Result<StatusCode, StatusCode> {
@@ -19,17 +18,17 @@ pub async fn book_car(det: Json<Value>) -> Result<StatusCode, StatusCode> {
 	Ok(StatusCode::OK)
 }
 
-// pub async fn ride_req_status(det: Json<Value>)->Result<StatusCode,StatusCode>{
-//     let det=det.0;
-// 	send_notification(det,"").await;
-// 	Ok(StatusCode::OK)
-// }
+pub async fn ride_req_status(det: Json<Value>)->Result<StatusCode,StatusCode>{
+    let det=det.0;
+	start_notification(det,"").await;
+	Ok(StatusCode::OK)
+}
 
-// pub async fn book_req_status(det: Json<Value>)->Result<StatusCode,StatusCode>{
-// 	let det=det.0;
-// 	send_notification(det,"").await;
-// 	Ok(StatusCode::OK)
-// }
+pub async fn book_req_status(det: Json<Value>)->Result<StatusCode,StatusCode>{
+	let det=det.0;
+	start_notification(det,"").await;
+	Ok(StatusCode::OK)
+}
 
 async fn start_notification(det: Value, category: &str) {
 	let db = db_client().await;
@@ -73,7 +72,7 @@ async fn start_notification(det: Value, category: &str) {
 		});
 	}else{
 		details=json!({
-			"notification":"Invalid category!"
+			"status":"accepted"
 		});
 	}
 	query = format!("SELECT notification_token FROM users WHERE user_id='{}'", recepient);
@@ -85,8 +84,8 @@ async fn start_notification(det: Value, category: &str) {
 
 pub async fn send_notification(category: &str, user_name: &str, token: &str, mut details:Value){
 	let client = fcm::Client::new();
-	let mut notification_builder = fcm::NotificationBuilder::new();
-	let mut message=String::new();
+	let notification_builder = fcm::NotificationBuilder::new();
+	// let mut message=String::new();
 	// if category == "Driver" {
 	// 	notification_builder.title("Ride request!");
 	// 	message=format!("{} has requested a ride!", user_name);
@@ -113,7 +112,7 @@ pub async fn send_notification(category: &str, user_name: &str, token: &str, mut
 	);
 	//  "c4JWkJpESg6I1q2irDFAbQ:APA91bGm01z1FVqLvwKr9qhkFauhSlBsN7PNbwnuQ7hjL_-yWTNnBffB5vs-IHePAW9UMQ7KNXl3T4KxxPs2JYKPK8SOa51N9wXPsNHX_Zvm-fB62r0A91x8eCbkxrcWBj3KR0Y0QKpv");
 	message_builder.notification(notification);
-	message_builder.data(&mut details);
+	message_builder.data(&mut details).unwrap();
 
 	let response = client.send(message_builder.finalize()).await.unwrap();
 	println!("Sent: {:?}", response);

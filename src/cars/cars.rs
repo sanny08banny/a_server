@@ -108,6 +108,7 @@ pub async fn mult_upload(mut multipart: Multipart) -> StatusCode {
 		match name.as_str() {
 			"category" => {
 				category = field.text().await.unwrap().replace("\"", "");
+				
 				if category == "taxi" {
 					file_path = "images/taxi/".to_owned();
 				} else if category == "car_hire" {
