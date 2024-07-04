@@ -24,10 +24,9 @@ pub async fn ride_req_status(det: Json<Value>)->Result<StatusCode,StatusCode>{
 	Ok(StatusCode::OK)
 }
 
-pub async fn book_req_status(det: Json<Value>)->Result<StatusCode,StatusCode>{
+pub async fn book_req_status(det: Json<Value>){
 	let det=det.0;
 	start_notification(det,"").await;
-	Ok(StatusCode::OK)
 }
 
 async fn start_notification(det: Value, category: &str) {
@@ -71,9 +70,15 @@ async fn start_notification(det: Value, category: &str) {
 			"client_id": client_id,
 		});
 	}else{
-		details=json!({
-			"status":"accepted"
-		});
+		if det["status"].as_str().unwrap() == "accepted" {
+			details=json!({
+				"status":"accepted"
+			});
+		}else{
+			details=json!({
+				"status":"rejected"
+			});
+		}
 	}
 	query = format!("SELECT notification_token FROM users WHERE user_id='{}'", recepient);
 	let res = db.query(query.as_str(), &[]).await.unwrap();

@@ -3,7 +3,8 @@ use std::{fs, io::Write};
 use axum::{extract::Multipart, Json};
 use chrono::format;
 use hyper::StatusCode;
-use serde_json::Value;
+use serde_json::{json, Value};
+use crate::fcm_t::fcm::book_req_status;
 
 use crate::db_client;
 
@@ -24,6 +25,7 @@ pub struct Car {
 pub struct BookingDetails {
 	user_id: String,
 	car_id: String,
+	owner_id: String,
 	description: String,
 }
 
@@ -60,6 +62,10 @@ pub async fn handler() -> Json<Vec<Car>> {
 
 pub async fn accept_book(req_details: Json<BookingDetails>) -> StatusCode {
 	let det = req_details.0;
+	let mut det2=json!({
+		"client_id":det.owner_id,
+		"recepient_id":det.user_id,
+	});
 	println!("det {:?}", det);
 	if det.description == "book" {
 		let g = db_client().await;
@@ -81,8 +87,12 @@ pub async fn accept_book(req_details: Json<BookingDetails>) -> StatusCode {
 		let new_user_tokens = user_tokens - booking_tokens;
 		let x = format!("UPDATE users SET tokens='{}' WHERE user_id='{}'", new_user_tokens, det.user_id);
 		g.execute(x.as_str(), &[]).await.unwrap();
+		det2["status"]=Value::String("accepted".to_string());
+        book_req_status(Json(det2)).await;
 		return StatusCode::OK;
 	} else if det.description == "unbook" {
+		det2["status"]=Value::String("accepted".to_string());
+        book_req_status(Json(det2)).await;
 		return StatusCode::OK;
 	}
 	return StatusCode::NOT_FOUND;
