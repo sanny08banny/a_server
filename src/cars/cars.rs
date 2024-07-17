@@ -208,22 +208,29 @@ pub async fn mult_upload(mut multipart: Multipart) -> StatusCode {
 		}
 	}
 	let r = images.clone();
+	let c=r.len();
 	for (i, x) in r.iter().enumerate() {
 		images[i] = format!("'{}'", x);
 	}
 	let images = format!("ARRAY[{}]", images.join(","));
 	if category == "car_hire" {
+		if c>0{
+			let q = format!("UPDATE car SET car_images={} WHERE car_id='{}'",images,car_id);
+			g.execute(q.as_str(), &[]).await.unwrap();
+		}
+        else{
 		println!("{}", images);
 		let token = 10.0;
 		let daily_price: f64 = daily_price.parse().unwrap();
 		let daily_down_payment: f64 = daily_down_payment.parse().unwrap();
 		let q = format!(
-			"INSERT INTO car (car_id, car_images, model, owner_id, location, description, daily_amount, daily_downpayment_amt, available,booking_tokens)
+			"INSERT INTO car (car_id, model, owner_id, location, description, daily_amount, daily_downpayment_amt, available,booking_tokens)
         VALUES
-          ('{}', {}, '{}', '{}', '{}', '{}', {}, {}, {},{})",
-			car_id, images, model, user_id, location, description, daily_price, daily_down_payment, available, token
+          ('{}', {}, '{}', '{}', '{}', {}, {}, {},{})",
+			car_id, model, user_id, location, description, daily_price, daily_down_payment, available, token
 		);
 		g.execute(q.as_str(), &[]).await.unwrap();
+	}
 	} else if category == "taxi" {
 		let q = format!("UPDATE taxi SET image_paths={} WHERE taxi_id='{}'",images,car_id);
 		g.execute(q.as_str(), &[]).await.unwrap();
