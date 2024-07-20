@@ -150,7 +150,7 @@ pub async fn verify_document(db: State<DbClient>, req:Json<VerificationObject>)-
 	match req.0.document_type {
 		VerificationDocumentType::NationalId => { modified=db.0.execute("UPDATE taxi_verifications SET NationalId=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap()},
 		VerificationDocumentType::Insurance => {modified=db.0.execute("UPDATE taxi_verifications SET Insurance=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap()},
-		VerificationDocumentType::DrivingLicense => { modified=db.0.execute("UPDATE taxi_verifications SET DrivingLicence=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap()},
+		VerificationDocumentType::DrivingLicense => { modified=db.0.execute("UPDATE taxi_verifications SET DrivingLicense=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap()},
 		VerificationDocumentType::PSVLicense => { modified=db.0.execute("UPDATE taxi_verifications SET PSVLicense=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap()},
 		VerificationDocumentType::InspectionReport => { modified=db.0.execute("UPDATE taxi_verifications SET InspectionReport=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap()},
 	}
