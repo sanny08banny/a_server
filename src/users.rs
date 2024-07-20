@@ -29,8 +29,13 @@ pub async fn create_user(user: Json<User>) -> StatusCode {
 	let password = user.password;
 	let notification_id = user.notification_id;
 	let r_tokens = 600.00;
-	let is_admin = false;
-	let is_driver = false;
+	let mut is_admin = false;
+	let mut is_driver = false;
+	match user.user_type {
+		UserType::Driver => {is_driver=true;},
+		UserType::Admin => {is_admin=true},
+		_=>{}
+	}
 	let user_name = user.name;
 	let q = format!(
 		"INSERT INTO users (email,password,tokens,isadmin,isdriver,notification_token,user_name) VALUES ('{}','{}','{}','{}','{}','{}','{}')",
