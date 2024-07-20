@@ -117,10 +117,13 @@ pub async fn multi_upload(mut multipart: Multipart) -> StatusCode {
 			}
 			"user_id" => {
 				user_id = field.text().await.unwrap().replace('"', "");
+				file_path=file_path + &user_id + "/";
 			}
 			"car_id" => {
 				car_id = field.text().await.unwrap().replace('"', "");
-				file_path = file_path + &user_id + "/" + &car_id + "/";
+				if category=="hire"{
+					file_path = file_path + &car_id + "/";
+				}
 				match fs::create_dir_all(&file_path) {
 					Ok(_) => {}
 					Err(e) => {
@@ -150,7 +153,7 @@ pub async fn multi_upload(mut multipart: Multipart) -> StatusCode {
 				print!("inspection_report_expiry {:?}", field.text().await.unwrap());
 			}
 			"inspection_report" => {
-				save_file(&file_path, "inspection_report.jpeg", &field.bytes().await.unwrap());
+				save_file(&file_path, "inspection_report.png", &field.bytes().await.unwrap());
 				print!("inspection_report");
 			}
 			"insurance_payment_plan" => {
@@ -160,27 +163,27 @@ pub async fn multi_upload(mut multipart: Multipart) -> StatusCode {
 				print!("insurance_expiry, {:?}", field.text().await.unwrap());
 			}
 			"insurance" => {
-				save_file(&file_path, "insurance.jpeg", &field.bytes().await.unwrap());
+				save_file(&file_path, "insurance.png", &field.bytes().await.unwrap());
 				print!("insurance");
 			}
 			"driving_licence" => {
-				save_file(&file_path, "driving_licence.jpeg", &field.bytes().await.unwrap());
+				save_file(&file_path, "driving_licence.png", &field.bytes().await.unwrap());
 				print!("driving_licence");
 			}
 			"psv_licence" => {
-				save_file(&file_path, "psv_licence.jpeg", &field.bytes().await.unwrap());
+				save_file(&file_path, "psv_licence.png", &field.bytes().await.unwrap());
 				print!("psv_licence");
 			}
 			"national_id_front" => {
-				save_file(&file_path, "national_id_front.jpeg", &field.bytes().await.unwrap());
+				save_file(&file_path, "national_id_front.png", &field.bytes().await.unwrap());
 				print!("national_id_front");
 			}
 			"national_id_back" => {
-				save_file(&file_path, "national_id_back.jpeg", &field.bytes().await.unwrap());
+				save_file(&file_path, "national_id_back.png", &field.bytes().await.unwrap());
 				print!("national_id_back");
 			}
 			_ => {
-				let img_name = format!("img_{}.{}", index, "jpeg");
+				let img_name = format!("img_{}.{}", index, "png");
 				let img = image::load_from_memory(&field.bytes().await.unwrap()).unwrap();
 				file_path.push_str(&img_name);
 				match img.save(&file_path) {

@@ -1,7 +1,11 @@
 use crate::{db_client::DbClient, ecryption_engine};
+use crate::file_server::file_content;
 use axum::{extract::State, Json};
 use base64::Engine;
+use hyper::{Body, StatusCode};
+use postgres::Row;
 use postgres_from_row::FromRow;
+use serde_json::{json, Value};
 
 #[derive(Debug, serde::Deserialize, FromRow, serde::Serialize)]
 pub struct Taxi {
@@ -39,5 +43,79 @@ pub async fn taxi_details(db: State<DbClient>, det: Json<TaxiDetailsReq>) -> Jso
 	match taxi {
 		Some(t) => Json(Some(Taxi::from_row(&t))),
 		None => Json(None),
+	}
+}
+
+/* 
+taxi_verifications table
+driver_id
+inspection_report
+insurance
+driving_licence
+psv_licence
+national_id
+ */
+// taxi table + verified column
+async fn get_unverified_taxis(db: State<DbClient>)->Json<Vec<Row>>{
+      let drivers=db.query("SELECT driver_id,email FROM taxi WHERE verified=$1", &[&false]).await.unwrap();
+	  return Json(drivers);
+}
+
+async fn get_unverified_documents(db: State<DbClient>,driver_id:String)->Value{
+	let verification_documents=db.query_opt("SELECT * FROM taxi_verifications WHERE email=$1", &[&driver_id]).await.unwrap();
+	match  verification_documents {
+		Some(row) => {
+			let docs=vec!["national_id","insurance","driving_licence","psv_licence","inspection_report"];
+			let mut unverified=Vec::new();
+			for doc in docs{
+				if !row.get::<_,bool>(doc){
+					unverified.push(doc);
+				}
+			}
+            json!(unverified)
+		},
+		None => json!({"Status":"Driver not found"}),
+	}
+}
+
+#[derive(serde::Deserialize)]
+enum VerificationDocumentType {
+	NationalId,
+	Insurance,
+	DrivingLicence,
+	PSVLicence,
+	InspectionReport
+}
+
+#[derive(serde::Deserialize)]
+struct VerificationObject{
+	driver_id:String,
+	document_type:VerificationDocumentType
+}
+
+async fn get_unverified_document(req: VerificationObject)->Body{
+	match req.document_type {	
+		VerificationDocumentType::NationalId => Body::from(file_content(format!("images/taxi/{}/national_id_front.png",req.driver_id))),
+		VerificationDocumentType::Insurance => Body::from(file_content(format!("images/taxi/{}/insurance.png",req.driver_id))),
+		VerificationDocumentType::DrivingLicence => Body::from(file_content(format!("images/taxi/{}/driving_licence.png",req.driver_id))),
+		VerificationDocumentType::PSVLicence => Body::from(file_content(format!("images/taxi/{}/psv_licence.png",req.driver_id))),
+		VerificationDocumentType::InspectionReport => Body::from(file_content(format!("images/taxi/{}/inspection_report.png",req.driver_id))),
+	}
+}
+
+
+async fn verify_document(db: State<DbClient>, req:VerificationObject)->StatusCode{
+	let mut modified:u64;
+	match req.document_type {
+		VerificationDocumentType::NationalId => { modified=db.0.execute("UPDATE taxi_verifications SET national_id=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap()},
+		VerificationDocumentType::Insurance => {{ modified=db.0.execute("UPDATE taxi_verifications SET insurance=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap()}},
+		VerificationDocumentType::DrivingLicence => { modified=db.0.execute("UPDATE taxi_verifications SET driving_licence=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap()},
+		VerificationDocumentType::PSVLicence => { modified=db.0.execute("UPDATE taxi_verifications SET psv_licence=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap()},
+		VerificationDocumentType::InspectionReport => { modified=db.0.execute("UPDATE taxi_verifications SET inspection_report=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap()},
+	}
+	if modified==1{
+		StatusCode::OK
+	}else {
+		StatusCode::NOT_MODIFIED
 	}
 }
