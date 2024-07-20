@@ -14,8 +14,7 @@ pub enum UserType {
 
 #[derive(serde::Deserialize, serde::Serialize, Debug)]
 pub struct User {
-	r#type: UserType,
-
+	user_type: UserType,
 	email: String,
 	password: String,
 	name: String,
