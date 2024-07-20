@@ -30,9 +30,9 @@ pub async fn driver_response(res: Json<Value>) -> Result<StatusCode, StatusCode>
 	let res = db.query_one(query.as_str(), &[]).await.unwrap();
 
 	let details = json!({
-		"plate_number": "KCA 123",
-		"color":"green",
-		"model":"Toyota",
+		"plate_number": res.get::<_,&str>("plate_number"),
+		"color":res.get::<_,&str>("color"),
+		"model":res.get::<_,&str>("model"),
 	});
 	send_notification("taxi_client", "", &client_token, details).await;
 	println!("{} {}", client_id, status);

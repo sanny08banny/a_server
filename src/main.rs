@@ -20,7 +20,6 @@ mod review;
 mod search;
 mod tokens;
 mod users;
-mod verification;
 
 use crate::search::search;
 
