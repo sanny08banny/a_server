@@ -223,7 +223,7 @@ pub async fn multi_upload(mut multipart: Multipart) -> StatusCode {
 			);
 			g.execute(q.as_str(), &[]).await.unwrap();
 		}
-	} else if category == "taxi" {
+	} else if category == "taxi" && c>0{
 		let q = format!("UPDATE taxi SET image_paths={} WHERE taxi_id='{}'", images, car_id);
 		g.execute(q.as_str(), &[]).await.unwrap();
 	}
