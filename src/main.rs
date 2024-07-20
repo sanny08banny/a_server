@@ -1,6 +1,6 @@
 use crate::db_client::db_client;
 use axum::routing::{get, post, Router};
-use cars::cars::{accept_book, get_cars, multi_upload, Car};
+use cars::{cars::{accept_book, get_cars, multi_upload, Car}, taxi::{get_unverified_document, get_unverified_documents, get_unverified_taxis, verify_document}};
 use fcm_t::{fcm::req_ride, token::update_token};
 use file_server::file_handler;
 use payment_gateway::mpesa_payment_gateway::{call_back_url, process_payment};
@@ -53,6 +53,11 @@ async fn main() {
 		.route("/v1/taxi_details", post(cars::taxi::taxi_details))
 		.route("/v1/ride_req_status", post(fcm_t::fcm::ride_request_status))
 		.route("/v1/book_req_status", post(fcm_t::fcm::book_request_status))
+		// taxi verification
+		.route("/v1/get_unverified_taxis",get(get_unverified_taxis))
+		.route("/v1/get_unverified_documents", post(get_unverified_documents))
+		.route("/v1/get_unverified_document", post(get_unverified_document))
+		.route("/v1/verify_document",post(verify_document))
 		.with_state(client)
 		.layer(CorsLayer::permissive());
 

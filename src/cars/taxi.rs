@@ -1,5 +1,6 @@
 use crate::{db_client::DbClient, ecryption_engine};
 use crate::file_server::file_content;
+use axum::response::Response;
 use axum::{extract::State, Json};
 use base64::Engine;
 use hyper::{Body, StatusCode};
@@ -65,13 +66,25 @@ psv_licence
 national_id
  */
 // taxi table + verified column
-async fn get_unverified_taxis(db: State<DbClient>)->Json<Vec<Row>>{
-      let drivers=db.query("SELECT driver_id,email FROM taxi WHERE verified=$1", &[&false]).await.unwrap();
+
+#[derive(serde::Deserialize,serde::Serialize)]
+pub struct UnverifiedDrivers{
+	emails:Vec<String>,
+	driver_ids:Vec<String>
+}
+
+pub async fn get_unverified_taxis(db: State<DbClient>)->Json<UnverifiedDrivers>{
+      let rows=db.query("SELECT driver_id,email FROM taxi WHERE verified=$1", &[&false]).await.unwrap();
+	  let mut drivers:UnverifiedDrivers=UnverifiedDrivers{emails:Vec::new(),driver_ids:Vec::new()};
+	  for row in rows{
+          drivers.emails.push(row.get("email"));
+		  drivers.driver_ids.push(row.get("driver_id"));
+	  }
 	  return Json(drivers);
 }
 
 // accessible to both the driver and admin
-async fn get_unverified_documents(db: State<DbClient>,driver_id:String)->Value{
+pub async fn get_unverified_documents(db: State<DbClient>,driver_id:String)->Json<Vec<String>>{
 	let verification_documents=db.query_opt("SELECT * FROM taxi_verifications WHERE driver_id=$1", &[&driver_id]).await.unwrap();
 	match  verification_documents {
 		Some(row) => {
@@ -79,7 +92,7 @@ async fn get_unverified_documents(db: State<DbClient>,driver_id:String)->Value{
 			let mut unverified=Vec::new();
 			for doc in docs{
 				if !row.get::<_,bool>(doc){
-					unverified.push(doc);
+					unverified.push(doc.to_string());
 				}
 			}
 			// check if verification is complete and update status
@@ -88,13 +101,13 @@ async fn get_unverified_documents(db: State<DbClient>,driver_id:String)->Value{
 				.await
 				.unwrap();
 			}
-            json!(unverified)
+            Json(unverified)
 		},
-		None => json!({"Status":"Driver not found"}),
+		None => Json(Vec::new()),
 	}
 }
 
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize,serde::Serialize)]
 enum VerificationDocumentType {
 	NationalId,
 	Insurance,
@@ -103,26 +116,26 @@ enum VerificationDocumentType {
 	InspectionReport
 }
 
-#[derive(serde::Deserialize)]
-struct VerificationObject{
+#[derive(serde::Deserialize,serde::Serialize)]
+pub struct VerificationObject{
 	driver_id:String,
 	document_type:VerificationDocumentType
 }
 
-async fn get_unverified_document(req: VerificationObject)->Body{
-	match req.document_type {	
-		VerificationDocumentType::NationalId => Body::from(file_content(format!("images/taxi/{}/national_id_front.png",req.driver_id))),
-		VerificationDocumentType::Insurance => Body::from(file_content(format!("images/taxi/{}/insurance.png",req.driver_id))),
-		VerificationDocumentType::DrivingLicence => Body::from(file_content(format!("images/taxi/{}/driving_licence.png",req.driver_id))),
-		VerificationDocumentType::PSVLicence => Body::from(file_content(format!("images/taxi/{}/psv_licence.png",req.driver_id))),
-		VerificationDocumentType::InspectionReport => Body::from(file_content(format!("images/taxi/{}/inspection_report.png",req.driver_id))),
+pub async fn get_unverified_document(req: Json<VerificationObject>)->Response<Body>{
+	match req.0.document_type {	
+		VerificationDocumentType::NationalId => Response::new(Body::from(file_content(format!("images/taxi/{}/national_id_front.png",req.driver_id)))),
+		VerificationDocumentType::Insurance => Response::new(Body::from(file_content(format!("images/taxi/{}/insurance.png",req.driver_id)))),
+		VerificationDocumentType::DrivingLicence => Response::new(Body::from(file_content(format!("images/taxi/{}/driving_licence.png",req.driver_id)))),
+		VerificationDocumentType::PSVLicence => Response::new(Body::from(file_content(format!("images/taxi/{}/psv_licence.png",req.driver_id)))),
+		VerificationDocumentType::InspectionReport => Response::new(Body::from(file_content(format!("images/taxi/{}/inspection_report.png",req.driver_id)))),
 	}
 }
 
 
-async fn verify_document(db: State<DbClient>, req:VerificationObject)->StatusCode{
+pub async fn verify_document(db: State<DbClient>, req:Json<VerificationObject>)->StatusCode{
 	let modified:u64;
-	match req.document_type {
+	match req.0.document_type {
 		VerificationDocumentType::NationalId => { modified=db.0.execute("UPDATE taxi_verifications SET national_id=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap()},
 		VerificationDocumentType::Insurance => {modified=db.0.execute("UPDATE taxi_verifications SET insurance=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap()},
 		VerificationDocumentType::DrivingLicence => { modified=db.0.execute("UPDATE taxi_verifications SET driving_licence=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap()},
