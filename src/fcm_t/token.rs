@@ -2,8 +2,8 @@ use axum::{extract::Path, Json};
 use hyper::StatusCode;
 use serde_json::{json, Value};
 
-use crate::fcm_t::fcm::send_notification;
 use crate::db_client::db_client;
+use crate::fcm_t::fcm::send_notification;
 
 pub async fn update_token(h: Path<(String, String)>) -> Result<StatusCode, StatusCode> {
 	let user_id = h.0 .0;
@@ -15,12 +15,11 @@ pub async fn update_token(h: Path<(String, String)>) -> Result<StatusCode, Statu
 	Ok(StatusCode::OK)
 }
 
-pub async fn driver_response(res:Json<Value>)->Result<StatusCode,StatusCode>
-{
-    let res = res.0;
-    let client_id = res["client_id"].as_str().unwrap();
-    let status = res["status"].as_str().unwrap();
-    let driver_id = res["driver_id"].as_str().unwrap();
+pub async fn driver_response(res: Json<Value>) -> Result<StatusCode, StatusCode> {
+	let res = res.0;
+	let client_id = res["client_id"].as_str().unwrap();
+	let status = res["status"].as_str().unwrap();
+	let driver_id = res["driver_id"].as_str().unwrap();
 	// let client_token = res["notification_id"].as_str().unwrap();
 	let db = db_client().await;
 	let query = format!("SELECT notification_token FROM users WHERE user_id='{}'", client_id);
@@ -32,7 +31,7 @@ pub async fn driver_response(res:Json<Value>)->Result<StatusCode,StatusCode>
 		"color":"green",
 		"model":"Toyota",
 	});
-    send_notification("taxi_client","",&client_token,details).await;
-    println!("{} {}", client_id, status);
-return Ok(StatusCode::OK);
+	send_notification("taxi_client", "", &client_token, details).await;
+	println!("{} {}", client_id, status);
+	return Ok(StatusCode::OK);
 }

@@ -12,7 +12,7 @@ pub struct User {
 	notification_id: String,
 }
 
-pub async fn create_user(user: Json<User>) ->StatusCode{
+pub async fn create_user(user: Json<User>) -> StatusCode {
 	let g = db_client().await;
 	let user = user.0;
 	println!("{:?}", user);
@@ -25,10 +25,10 @@ pub async fn create_user(user: Json<User>) ->StatusCode{
 	let user_name = user.name;
 	let q = format!(
 		"INSERT INTO users (email,password,tokens,isadmin,isdriver,notification_token,user_name) VALUES ('{}','{}','{}','{}','{}','{}','{}')",
-		email, password, r_tokens, is_admin, is_driver, notification_id,user_name
+		email, password, r_tokens, is_admin, is_driver, notification_id, user_name
 	);
-	let res=g.execute(q.as_str(), &[]).await;
-	if res.is_err(){
+	let res = g.execute(q.as_str(), &[]).await;
+	if res.is_err() {
 		return StatusCode::NOT_MODIFIED;
 	}
 	StatusCode::OK
@@ -65,8 +65,8 @@ pub async fn change_category(j: Json<Value>) -> Json<Value> {
 	let category = j["category"].as_str().unwrap();
 	if category == "driver" {
 		let q = format!("UPDATE users SET isdriver=true WHERE user_id='{}'", id);
-		let query=g.execute(q.as_str(), &[]).await;
-		if query.is_err(){
+		let query = g.execute(q.as_str(), &[]).await;
+		if query.is_err() {
 			let p = json!({"user_id":id,"is_driver":false});
 			return Json(p);
 		}
@@ -74,8 +74,8 @@ pub async fn change_category(j: Json<Value>) -> Json<Value> {
 		return Json(p);
 	} else if category == "admin" {
 		let q = format!("UPDATE users SET isadmin=true WHERE user_id='{}'", id);
-		let query=g.execute(q.as_str(), &[]).await;
-		if query.is_err(){
+		let query = g.execute(q.as_str(), &[]).await;
+		if query.is_err() {
 			let p = json!({"user_id":id,"is_admin":false});
 			return Json(p);
 		}
@@ -83,8 +83,8 @@ pub async fn change_category(j: Json<Value>) -> Json<Value> {
 		return Json(p);
 	} else if category == "normal" {
 		let q = format!("UPDATE users SET isadmin=false,isdriver=false WHERE user_id='{}'", id);
-		let query=g.execute(q.as_str(), &[]).await;
-		if query.is_err(){
+		let query = g.execute(q.as_str(), &[]).await;
+		if query.is_err() {
 			let p = json!({"user_id":id,"is_admin":false,"is_driver":false});
 			return Json(p);
 		}
@@ -95,14 +95,14 @@ pub async fn change_category(j: Json<Value>) -> Json<Value> {
 	return Json(p);
 }
 
-pub async fn delete_user(j: Json<Value>)->StatusCode{
+pub async fn delete_user(j: Json<Value>) -> StatusCode {
 	let g = db_client().await;
 	let j = j.0;
-	let email= j["email"].as_str().unwrap();
+	let email = j["email"].as_str().unwrap();
 	let pwd = j["password"].as_str().unwrap();
-	let q = format!("DELETE FROM users WHERE email='{}' AND password='{}'",email,pwd);
-	let y=g.execute(q.as_str(), &[]).await;
-	if y.is_err(){
+	let q = format!("DELETE FROM users WHERE email='{}' AND password='{}'", email, pwd);
+	let y = g.execute(q.as_str(), &[]).await;
+	if y.is_err() {
 		return StatusCode::NOT_MODIFIED;
 	}
 	StatusCode::OK

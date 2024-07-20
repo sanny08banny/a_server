@@ -33,7 +33,7 @@ pub async fn car_review(ids: Json<Value>) -> Json<Value> {
 	let owner_id = ids.get("owner_id").unwrap().to_string();
 
 	let rev = Review {
-		id:"get from db".to_string(),
+		id: "get from db".to_string(),
 		user_name: "USER_NAME".to_string(),
 		title: "This the title".to_string(),
 		comment: "Awesome".to_string(),
@@ -63,7 +63,7 @@ pub async fn post_review(rev: Json<Value>) {
 	let car_id = rev.get("car_id").unwrap().to_string();
 	let comment = rev.get("comment").unwrap().to_string();
 	let rating = rev.get("rating").unwrap().as_f64().unwrap();
-	let owner_id="get from db".to_string();
+	let owner_id = "get from db".to_string();
 	let timestamp = Local::now().format("%Y%m%d%H%M%S").to_string();
 	let input = format!("{}{}{}", car_id, owner_id, timestamp);
 	let id = CUSTOM_ENGINE.encode(input);
@@ -80,7 +80,7 @@ pub async fn post_review(rev: Json<Value>) {
 // creating a psql review table with the followinf columns
 // review_id, taxi_id, client_id, driver_id,title, comment, rating
 // use the following psql command
-// create table taxi_reviews( 
+// create table taxi_reviews(
 // 	review_id varchar(255) primary key,
 // 	taxi_id varchar(255),
 // 	client_id varchar(255),
@@ -88,7 +88,7 @@ pub async fn post_review(rev: Json<Value>) {
 // 	title varchar(255),
 // 	comment text,
 // 	rating float
-// ); 
+// );
 
 // taxi table: taxi_id,driver_id,model,color,image_paths(an array of image paths),plate_number
 // create table taxi(

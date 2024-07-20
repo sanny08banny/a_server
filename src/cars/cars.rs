@@ -1,10 +1,9 @@
 use std::{fs, io::Write};
 
+use crate::fcm_t::fcm::book_req_status;
 use axum::{extract::Multipart, Json};
-use chrono::format;
 use hyper::StatusCode;
 use serde_json::{json, Value};
-use crate::fcm_t::fcm::book_req_status;
 
 use crate::db_client;
 
@@ -29,7 +28,7 @@ pub struct BookingDetails {
 	description: String,
 }
 
-pub async fn handler() -> Json<Vec<Car>> {
+pub async fn get_cars() -> Json<Vec<Car>> {
 	let g = db_client().await;
 	let q = "SELECT * FROM car";
 	let rows = g.query(q, &[]).await.unwrap();
@@ -62,7 +61,7 @@ pub async fn handler() -> Json<Vec<Car>> {
 
 pub async fn accept_book(req_details: Json<BookingDetails>) -> StatusCode {
 	let det = req_details.0;
-	let mut det2=json!({
+	let mut det2 = json!({
 		"client_id":det.owner_id,
 		"recepient_id":det.user_id,
 	});
@@ -87,12 +86,12 @@ pub async fn accept_book(req_details: Json<BookingDetails>) -> StatusCode {
 		let new_user_tokens = user_tokens - booking_tokens;
 		let x = format!("UPDATE users SET tokens='{}' WHERE user_id='{}'", new_user_tokens, det.user_id);
 		g.execute(x.as_str(), &[]).await.unwrap();
-		det2["status"]=Value::String("accepted".to_string());
-        book_req_status(Json(det2)).await;
+		det2["status"] = Value::String("accepted".to_string());
+		book_req_status(Json(det2)).await;
 		return StatusCode::OK;
 	} else if det.description == "unbook" {
-		det2["status"]=Value::String("accepted".to_string());
-        book_req_status(Json(det2)).await;
+		det2["status"] = Value::String("accepted".to_string());
+		book_req_status(Json(det2)).await;
 		return StatusCode::OK;
 	}
 	return StatusCode::NOT_FOUND;
@@ -118,7 +117,7 @@ pub async fn mult_upload(mut multipart: Multipart) -> StatusCode {
 		match name.as_str() {
 			"category" => {
 				category = field.text().await.unwrap().replace("\"", "");
-				
+
 				if category == "taxi" {
 					file_path = "images/taxi/".to_owned();
 				} else if category == "car_hire" {
@@ -208,33 +207,31 @@ pub async fn mult_upload(mut multipart: Multipart) -> StatusCode {
 		}
 	}
 	let r = images.clone();
-	let c=r.len();
+	let c = r.len();
 	for (i, x) in r.iter().enumerate() {
 		images[i] = format!("'{}'", x);
 	}
 	let images = format!("ARRAY[{}]", images.join(","));
 	if category == "car_hire" {
-		if c>0{
-			let q = format!("UPDATE car SET car_images={} WHERE car_id='{}'",images,car_id);
+		if c > 0 {
+			let q = format!("UPDATE car SET car_images={} WHERE car_id='{}'", images, car_id);
 			g.execute(q.as_str(), &[]).await.unwrap();
-		}
-        else{
-		println!("{}", images);
-		let token = 10.0;
-		let daily_price: f64 = daily_price.parse().unwrap();
-		let daily_down_payment: f64 = daily_down_payment.parse().unwrap();
-		let q = format!(
-			"INSERT INTO car (car_id,car_images, model, owner_id, location, description, daily_amount, daily_downpayment_amt, available,booking_tokens)
+		} else {
+			println!("{}", images);
+			let token = 10.0;
+			let daily_price: f64 = daily_price.parse().unwrap();
+			let daily_down_payment: f64 = daily_down_payment.parse().unwrap();
+			let q = format!(
+				"INSERT INTO car (car_id,car_images, model, owner_id, location, description, daily_amount, daily_downpayment_amt, available,booking_tokens)
         VALUES
           ('{}','{}', {}, '{}', '{}', '{}', {}, {}, {},{})",
-			car_id, images,model, user_id, location, description, daily_price, daily_down_payment, available, token
-		);
-		g.execute(q.as_str(), &[]).await.unwrap();
-	}
+				car_id, images, model, user_id, location, description, daily_price, daily_down_payment, available, token
+			);
+			g.execute(q.as_str(), &[]).await.unwrap();
+		}
 	} else if category == "taxi" {
-		let q = format!("UPDATE taxi SET image_paths={} WHERE taxi_id='{}'",images,car_id);
+		let q = format!("UPDATE taxi SET image_paths={} WHERE taxi_id='{}'", images, car_id);
 		g.execute(q.as_str(), &[]).await.unwrap();
-		
 	}
 	StatusCode::OK
 }

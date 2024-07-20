@@ -3,10 +3,8 @@ name = "house_server"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-axum = {version="0.6.20", features=["multipart"]}
+axum = { version = "0.6.20", features = ["multipart"] }
 hyper = "0.14.27"
 image = "0.24.7"
 serde_json = "1.0.105"
