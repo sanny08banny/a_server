@@ -148,11 +148,11 @@ pub async fn get_unverified_document(req: Json<VerificationObject>)->Response<Bo
 pub async fn verify_document(db: State<DbClient>, req:Json<VerificationObject>)->StatusCode{
 	let modified:u64;
 	match req.0.document_type {
-		VerificationDocumentType::NationalId => { modified=db.0.execute("UPDATE taxi_verifications SET national_id=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap()},
-		VerificationDocumentType::Insurance => {modified=db.0.execute("UPDATE taxi_verifications SET insurance=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap()},
-		VerificationDocumentType::DrivingLicense => { modified=db.0.execute("UPDATE taxi_verifications SET driving_licence=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap()},
-		VerificationDocumentType::PSVLicense => { modified=db.0.execute("UPDATE taxi_verifications SET psv_licence=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap()},
-		VerificationDocumentType::InspectionReport => { modified=db.0.execute("UPDATE taxi_verifications SET inspection_report=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap()},
+		VerificationDocumentType::NationalId => { modified=db.0.execute("UPDATE taxi_verifications SET NationalId=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap()},
+		VerificationDocumentType::Insurance => {modified=db.0.execute("UPDATE taxi_verifications SET Insurance=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap()},
+		VerificationDocumentType::DrivingLicense => { modified=db.0.execute("UPDATE taxi_verifications SET DrivingLicence=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap()},
+		VerificationDocumentType::PSVLicense => { modified=db.0.execute("UPDATE taxi_verifications SET PSVLicense=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap()},
+		VerificationDocumentType::InspectionReport => { modified=db.0.execute("UPDATE taxi_verifications SET InspectionReport=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap()},
 	}
 	if modified==1{
 		StatusCode::OK
