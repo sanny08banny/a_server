@@ -77,16 +77,20 @@ national_id
 
 #[derive(serde::Deserialize,serde::Serialize)]
 pub struct UnverifiedDrivers{
-	emails:Vec<String>,
+	names:Vec<String>,
 	driver_ids:Vec<String>
 }
 
 pub async fn get_unverified_taxis(db: State<DbClient>)->Json<UnverifiedDrivers>{
-      let rows=db.query("SELECT driver_id,email FROM taxi WHERE verified=$1", &[&false]).await.unwrap();
-	  let mut drivers:UnverifiedDrivers=UnverifiedDrivers{emails:Vec::new(),driver_ids:Vec::new()};
+      let rows=db.query("SELECT driver_id FROM taxi WHERE verified=$1", &[&false]).await.unwrap();
+	  let mut drivers:UnverifiedDrivers=UnverifiedDrivers{names:Vec::new(),driver_ids:Vec::new()};
+	  let mut driver_id: String	;
+	  let mut name: String;
 	  for row in rows{
-          drivers.emails.push(row.get("email"));
-		  drivers.driver_ids.push(row.get("driver_id"));
+		  driver_id=row.get("driver_id");
+		  name=db.query_one("SELECT user_name FROM users WHERE user_id=$1", &[&driver_id]).await.unwrap().get("user_name");
+		  drivers.names.push(name);
+		  drivers.driver_ids.push(driver_id);
 	  }
 	  return Json(drivers);
 }
