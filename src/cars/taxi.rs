@@ -32,7 +32,7 @@ pub async fn init_taxi(db: State<DbClient>, taxi: Json<Taxi>) -> String {
 	insurance,
 	driving_licence,
 	psv_licence,
-	national_id) VALUES ('$1',$2,$3,$4,$5,$6)";
+	national_id) VALUES ($1,$2,$3,$4,$5,$6)";
 	db.execute(
 	statement,&[&taxi.driver_id,&false,&false,&false,&false,&false])
 	.await
