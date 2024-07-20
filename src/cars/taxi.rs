@@ -37,11 +37,11 @@ pub async fn init_taxi(db: State<DbClient>, taxi: Json<Taxi>) -> String {
 	.unwrap();
 	statement="INSERT INTO taxi_verifications (
 	driver_id,
-	inspection_report,
-	insurance,
-	driving_license,
-	psv_license,
-	national_id) VALUES ($1,$2,$3,$4,$5,$6)";
+	InspectionReport,
+	Insurance,
+	DrivingLicense,
+	PSVLicense,
+	NationalId) VALUES ($1,$2,$3,$4,$5,$6)";
 	db.execute(
 	statement,&[&taxi.driver_id,&false,&false,&false,&false,&false])
 	.await
