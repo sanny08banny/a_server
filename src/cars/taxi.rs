@@ -100,7 +100,7 @@ pub async fn get_unverified_documents(db: State<DbClient>,driver_id:String)->Jso
 	let verification_documents=db.query_opt("SELECT * FROM taxi_verifications WHERE driver_id=$1", &[&driver_id]).await.unwrap();
 	match  verification_documents {
 		Some(row) => {
-			let docs=vec!["NationalId","Insurance","DrivingLicence","PSVLicence","InspectionReport"];
+			let docs=vec!["national_id","insurance","driving_license","psv_license","inspection_report"];
 			let mut unverified=Vec::new();
 			for doc in docs{
 				if !row.get::<_,bool>(doc){
