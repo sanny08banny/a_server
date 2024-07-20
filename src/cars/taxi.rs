@@ -4,9 +4,15 @@ use axum::response::Response;
 use axum::{extract::State, Json};
 use base64::Engine;
 use hyper::{Body, StatusCode};
-use postgres::Row;
 use postgres_from_row::FromRow;
-use serde_json::{json, Value};
+
+
+
+enum TaxiCategory{
+	Economy,
+	X,
+	Xl
+}
 
 #[derive(Debug, serde::Deserialize, FromRow, serde::Serialize)]
 pub struct Taxi {
@@ -29,7 +35,9 @@ pub async fn init_taxi(db: State<DbClient>, taxi: Json<Taxi>) -> String {
 	)
 	.await
 	.unwrap();
-	statement="INSERT INTO taxi_verifications (driver_id,inspection_report
+	statement="INSERT INTO taxi_verifications (
+	driver_id,
+	inspection_report
 	insurance,
 	driving_licence,
 	psv_licence,
