@@ -100,7 +100,7 @@ pub async fn get_unverified_documents(db: State<DbClient>,driver_id:String)->Jso
 	let verification_documents=db.query_opt("SELECT * FROM taxi_verifications WHERE driver_id=$1", &[&driver_id]).await.unwrap();
 	match  verification_documents {
 		Some(row) => {
-			let docs=vec!["NationalId","Insurance","DrivingLicence","PSVLicence","InspectionReport"];
+			let docs= ["NationalId","Insurance","DrivingLicense","PSVLicense","InspectionReport"];
 			let mut unverified=Vec::new();
 			for doc in docs{
 				if !row.get::<_,bool>(doc){
@@ -123,8 +123,8 @@ pub async fn get_unverified_documents(db: State<DbClient>,driver_id:String)->Jso
 enum VerificationDocumentType {
 	NationalId,
 	Insurance,
-	DrivingLicence,
-	PSVLicence,
+	DrivingLicense,
+	PSVLicense,
 	InspectionReport
 }
 
@@ -138,8 +138,8 @@ pub async fn get_unverified_document(req: Json<VerificationObject>)->Response<Bo
 	match req.0.document_type {	
 		VerificationDocumentType::NationalId => Response::new(Body::from(file_content(format!("images/taxi/{}/national_id_front.png",req.driver_id)))),
 		VerificationDocumentType::Insurance => Response::new(Body::from(file_content(format!("images/taxi/{}/insurance.png",req.driver_id)))),
-		VerificationDocumentType::DrivingLicence => Response::new(Body::from(file_content(format!("images/taxi/{}/driving_licence.png",req.driver_id)))),
-		VerificationDocumentType::PSVLicence => Response::new(Body::from(file_content(format!("images/taxi/{}/psv_licence.png",req.driver_id)))),
+		VerificationDocumentType::DrivingLicense => Response::new(Body::from(file_content(format!("images/taxi/{}/driving_licence.png",req.driver_id)))),
+		VerificationDocumentType::PSVLicense => Response::new(Body::from(file_content(format!("images/taxi/{}/psv_licence.png",req.driver_id)))),
 		VerificationDocumentType::InspectionReport => Response::new(Body::from(file_content(format!("images/taxi/{}/inspection_report.png",req.driver_id)))),
 	}
 }
@@ -150,8 +150,8 @@ pub async fn verify_document(db: State<DbClient>, req:Json<VerificationObject>)-
 	match req.0.document_type {
 		VerificationDocumentType::NationalId => { modified=db.0.execute("UPDATE taxi_verifications SET national_id=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap()},
 		VerificationDocumentType::Insurance => {modified=db.0.execute("UPDATE taxi_verifications SET insurance=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap()},
-		VerificationDocumentType::DrivingLicence => { modified=db.0.execute("UPDATE taxi_verifications SET driving_licence=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap()},
-		VerificationDocumentType::PSVLicence => { modified=db.0.execute("UPDATE taxi_verifications SET psv_licence=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap()},
+		VerificationDocumentType::DrivingLicense => { modified=db.0.execute("UPDATE taxi_verifications SET driving_licence=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap()},
+		VerificationDocumentType::PSVLicense => { modified=db.0.execute("UPDATE taxi_verifications SET psv_licence=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap()},
 		VerificationDocumentType::InspectionReport => { modified=db.0.execute("UPDATE taxi_verifications SET inspection_report=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap()},
 	}
 	if modified==1{
