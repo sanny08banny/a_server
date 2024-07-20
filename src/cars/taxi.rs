@@ -88,7 +88,7 @@ pub async fn get_unverified_taxis(db: State<DbClient>)->Json<UnverifiedDrivers>{
 	  let mut name: String;
 	  for row in rows{
 		  driver_id=row.get("driver_id");
-		  let n=db.query_one("SELECT user_name FROM users WHERE user_id=$1", &[&driver_id]).await.unwrap()
+		  let n=db.query_one("SELECT user_name FROM users WHERE user_id=$1", &[&driver_id]).await.unwrap();
 		  println!("{:?}",n);
 		//   .get("user_name");
 		//   drivers.names.push(name);
