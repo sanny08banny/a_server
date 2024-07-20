@@ -1,6 +1,19 @@
-use tokio_postgres::{Client, NoTls};
+use std::sync::Arc;
 
-pub async fn db_client() -> Client {
+use tokio_postgres::NoTls;
+
+#[derive(Debug, Clone)]
+pub struct DbClient(Arc<tokio_postgres::Client>);
+
+impl std::ops::Deref for DbClient {
+	type Target = tokio_postgres::Client;
+
+	fn deref(&self) -> &Self::Target {
+		&self.0
+	}
+}
+
+pub async fn db_client() -> DbClient {
 	let host = "localhost";
 	let user = "ubuntu";
 	let password = "new_password";
@@ -14,5 +27,5 @@ pub async fn db_client() -> Client {
 		}
 	});
 
-	client
+	DbClient(Arc::new(client))
 }

@@ -1,13 +1,17 @@
 use std::{fs, io::Write};
 
-use crate::fcm_t::fcm::book_req_status;
-use axum::{extract::Multipart, Json};
+use crate::{db_client::DbClient, fcm_t::fcm::book_request_status};
+use axum::{
+	extract::{Multipart, State},
+	Json,
+};
 use hyper::StatusCode;
+use postgres_from_row::FromRow;
 use serde_json::{json, Value};
 
 use crate::db_client;
 
-#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(serde::Deserialize, serde::Serialize, FromRow)]
 pub struct Car {
 	pub car_images: Vec<String>,
 	pub model: String,
@@ -21,83 +25,70 @@ pub struct Car {
 }
 
 #[derive(serde::Deserialize, Debug)]
-pub struct BookingDetails {
+pub struct BookingRequest {
 	user_id: String,
 	car_id: String,
 	owner_id: String,
-	description: String,
+	description: BookingDetailsDesc,
 }
 
-pub async fn get_cars() -> Json<Vec<Car>> {
-	let g = db_client().await;
-	let q = "SELECT * FROM car";
-	let rows = g.query(q, &[]).await.unwrap();
-	let mut x = Vec::new();
-	for row in rows {
-		let owner_id: String = row.get::<_, String>("owner_id");
-		let car_id: String = row.get::<_, String>("car_id");
-		let model: String = row.get::<_, String>("model");
-		let location: String = row.get::<_, String>("location");
-		let description: String = row.get::<_, String>("description");
-		let daily_amount: f64 = row.get::<_, f64>("daily_amount");
-		let daily_downpayment_amt: f64 = row.get::<_, f64>("daily_downpayment_amt");
-		let car_images: Vec<String> = row.get::<_, Vec<String>>("car_images");
-		let available: bool = row.get::<_, bool>("available");
-		let car = Car {
-			car_images,
-			model,
-			car_id,
-			owner_id,
-			location,
-			description,
-			amount: daily_amount,
-			downpayment_amt: daily_downpayment_amt,
-			available,
-		};
-		x.push(car);
-	}
-	Json(x)
+#[derive(serde::Deserialize, Debug)]
+#[serde(rename = "camelCase")]
+#[non_exhaustive]
+pub enum BookingDetailsDesc {
+	Book,
+	Unbook,
 }
 
-pub async fn accept_book(req_details: Json<BookingDetails>) -> StatusCode {
-	let det = req_details.0;
-	let mut det2 = json!({
-		"client_id":det.owner_id,
-		"recepient_id":det.user_id,
+pub async fn get_cars(db: State<DbClient>) -> Json<Vec<Car>> {
+	let rows = db.query("SELECT * FROM car", &[]).await.unwrap();
+	let cars = rows.iter().map(Car::from_row).collect();
+	Json(cars)
+}
+
+pub async fn accept_book(db: State<DbClient>, details: Json<BookingRequest>) -> StatusCode {
+	let request = details.0;
+	let mut details = json!({
+		"client_id":request.owner_id,
+		"recepient_id":request.user_id,
 	});
-	println!("det {:?}", det);
-	if det.description == "book" {
-		let g = db_client().await;
-		let y = format!("SELECT booking_tokens FROM car WHERE car_id='{}'", det.car_id);
-		let rows = g.query(y.as_str(), &[]).await.unwrap();
-		let mut booking_tokens = 0.00;
-		for row in rows {
-			booking_tokens = row.get::<_, f64>("booking_tokens");
+
+	match request.description {
+		BookingDetailsDesc::Book => {
+			let g = db_client().await;
+			let y = format!("SELECT booking_tokens FROM car WHERE car_id='{}'", request.car_id);
+			let rows = g.query(y.as_str(), &[]).await.unwrap();
+			let mut booking_tokens = 0.00;
+			for row in rows {
+				booking_tokens = row.get::<_, f64>("booking_tokens");
+			}
+			let x = format!("SELECT tokens FROM users WHERE user_id='{}'", request.user_id);
+			let rows = g.query(x.as_str(), &[]).await.unwrap();
+			let mut user_tokens = 0.00;
+			for row in rows {
+				user_tokens = row.get::<_, f64>("tokens");
+			}
+			if user_tokens < booking_tokens {
+				return StatusCode::EXPECTATION_FAILED;
+			}
+			let new_user_tokens = user_tokens - booking_tokens;
+			let x = format!("UPDATE users SET tokens='{}' WHERE user_id='{}'", new_user_tokens, request.user_id);
+			g.execute(x.as_str(), &[]).await.unwrap();
+			details["status"] = Value::String("accepted".to_string());
+			book_request_status(db, Json(details)).await;
+
+			StatusCode::OK
 		}
-		let x = format!("SELECT tokens FROM users WHERE user_id='{}'", det.user_id);
-		let rows = g.query(x.as_str(), &[]).await.unwrap();
-		let mut user_tokens = 0.00;
-		for row in rows {
-			user_tokens = row.get::<_, f64>("tokens");
+		BookingDetailsDesc::Unbook => {
+			details["status"] = Value::String("accepted".to_string());
+			book_request_status(db, Json(details)).await;
+
+			StatusCode::OK
 		}
-		if user_tokens < booking_tokens {
-			return StatusCode::EXPECTATION_FAILED;
-		}
-		let new_user_tokens = user_tokens - booking_tokens;
-		let x = format!("UPDATE users SET tokens='{}' WHERE user_id='{}'", new_user_tokens, det.user_id);
-		g.execute(x.as_str(), &[]).await.unwrap();
-		det2["status"] = Value::String("accepted".to_string());
-		book_req_status(Json(det2)).await;
-		return StatusCode::OK;
-	} else if det.description == "unbook" {
-		det2["status"] = Value::String("accepted".to_string());
-		book_req_status(Json(det2)).await;
-		return StatusCode::OK;
 	}
-	return StatusCode::NOT_FOUND;
 }
 
-pub async fn mult_upload(mut multipart: Multipart) -> StatusCode {
+pub async fn multi_upload(mut multipart: Multipart) -> StatusCode {
 	let mut user_id = String::new();
 	let mut car_id = String::new();
 	let mut model = String::new();
@@ -116,7 +107,7 @@ pub async fn mult_upload(mut multipart: Multipart) -> StatusCode {
 		println!("{:?}", name);
 		match name.as_str() {
 			"category" => {
-				category = field.text().await.unwrap().replace("\"", "");
+				category = field.text().await.unwrap().replace('"', "");
 
 				if category == "taxi" {
 					file_path = "images/taxi/".to_owned();
@@ -125,10 +116,10 @@ pub async fn mult_upload(mut multipart: Multipart) -> StatusCode {
 				}
 			}
 			"user_id" => {
-				user_id = field.text().await.unwrap().replace("\"", "");
+				user_id = field.text().await.unwrap().replace('"', "");
 			}
 			"car_id" => {
-				car_id = field.text().await.unwrap().replace("\"", "");
+				car_id = field.text().await.unwrap().replace('"', "");
 				file_path = file_path + &user_id + "/" + &car_id + "/";
 				match fs::create_dir_all(&file_path) {
 					Ok(_) => {}
@@ -138,19 +129,19 @@ pub async fn mult_upload(mut multipart: Multipart) -> StatusCode {
 				}
 			}
 			"model" => {
-				model = field.text().await.unwrap().replace("\"", "");
+				model = field.text().await.unwrap().replace('"', "");
 			}
 			"location" => {
-				location = field.text().await.unwrap().replace("\"", "");
+				location = field.text().await.unwrap().replace('"', "");
 			}
 			"description" => {
-				description = field.text().await.unwrap().replace("\"", "");
+				description = field.text().await.unwrap().replace('"', "");
 			}
 			"daily_price" => {
-				daily_price = field.text().await.unwrap().replace("\"", "");
+				daily_price = field.text().await.unwrap().replace('"', "");
 			}
 			"daily_down_payment" => {
-				daily_down_payment = field.text().await.unwrap().replace("\"", "");
+				daily_down_payment = field.text().await.unwrap().replace('"', "");
 			}
 			"available" => {
 				available = field.text().await.unwrap().parse().unwrap();

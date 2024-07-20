@@ -1,43 +1,36 @@
-use crate::db_client::db_client;
-use axum::Json;
+use crate::db_client::DbClient;
+use axum::{extract::State, Json};
 use fcm;
 use hyper::StatusCode;
 use serde_json::{json, Value};
 
-pub async fn req_ride(det: Json<Vec<Value>>) -> Result<StatusCode, StatusCode> {
-	let det = det.0;
-	for i in 0..det.len() {
-		start_notification(det[i].clone(), "Driver").await;
+pub async fn req_ride(db: State<DbClient>, details: Json<Vec<Value>>) -> Result<StatusCode, StatusCode> {
+	for detail in details.0.iter().cloned() {
+		start_notification(&db.0, detail, "Driver").await;
 	}
 	Ok(StatusCode::OK)
 }
 
-pub async fn book_car(det: Json<Value>) -> Result<StatusCode, StatusCode> {
-	let det = det.0;
-	start_notification(det, "Owner").await;
+pub async fn book_car(db: State<DbClient>, detail: Json<Value>) -> Result<StatusCode, StatusCode> {
+	start_notification(&db.0, detail.0, "Owner").await;
 	Ok(StatusCode::OK)
 }
 
-pub async fn ride_req_status(det: Json<Value>) -> Result<StatusCode, StatusCode> {
-	let det = det.0;
-	start_notification(det, "").await;
+pub async fn ride_request_status(db: State<DbClient>, detail: Json<Value>) -> Result<StatusCode, StatusCode> {
+	start_notification(&db.0, detail.0, "Normal").await;
 	Ok(StatusCode::OK)
 }
 
-pub async fn book_req_status(det: Json<Value>) {
-	let det = det.0;
-	start_notification(det, "").await;
+pub async fn book_request_status(db: State<DbClient>, detail: Json<Value>) {
+	start_notification(&db.0, detail.0, "Normal").await;
 }
 
-async fn start_notification(det: Value, category: &str) {
-	let db = db_client().await;
+async fn start_notification(db: &DbClient, det: Value, category: &str) {
 	let client_id = det["client_id"].as_str().unwrap();
 	let recepient = det["recepient_id"].as_str().unwrap();
-	println!("client id: {:?}", client_id);
-	println!("recepient id: {:?}", recepient);
-	let mut details: Value = json!({});
+
 	// get username from db
-	let mut query = format!("SELECT user_name, user_phone FROM users WHERE user_id='{}'", client_id);
+	let query = format!("SELECT user_name, user_phone FROM users WHERE user_id='{}'", client_id);
 	let res = db.query(query.as_str(), &[]).await.unwrap();
 	let user_name: String = res[0].get("user_name");
 	// let user_phone: String = res[0].get("user_phone");
@@ -46,8 +39,8 @@ async fn start_notification(det: Value, category: &str) {
 	// let res = db.query(query.as_str(), &[]).await.unwrap();
 	// let client_token: String = res[0].get("notification_token");
 
-	if category == "Driver" {
-		details = json!(
+	let details = if category == "Driver" {
+		json!(
 		{
 			"ride_id": client_id.to_owned()+"_"+recepient,
 			"user_name": user_name,
@@ -58,63 +51,38 @@ async fn start_notification(det: Value, category: &str) {
 			"current_lat": det["current_lat"].as_f64().unwrap(),
 			"current_lon": det["current_lon"].as_f64().unwrap(),
 			"client_id": client_id,
-		});
+		})
 	} else if category == "Owner" {
-		details = json!(
+		json!(
 		{
 			"booking_id": client_id.to_owned()+"_"+recepient,
 			"user_name": user_name,
 			// "user_phone": user_phone,
 			"car_id": det["car_id"].as_str().unwrap(),
 			"client_id": client_id,
-		});
+		})
+	} else if category == "Normal" && det["status"].as_str().unwrap() == "accepted" {
+		json!({
+			"status":"accepted"
+		})
 	} else {
-		if det["status"].as_str().unwrap() == "accepted" {
-			details = json!({
-				"status":"accepted"
-			});
-		} else {
-			details = json!({
-				"status":"rejected"
-			});
-		}
-	}
-	query = format!("SELECT notification_token FROM users WHERE user_id='{}'", recepient);
+		json!({
+			"status":"rejected"
+		})
+	};
+
+	let query = format!("SELECT notification_token FROM users WHERE user_id='{}'", recepient);
 	let res = db.query(query.as_str(), &[]).await.unwrap();
 	let token: String = res[0].get("notification_token");
 	println!("recepient notification token: {:?}", token);
 	send_notification(category, user_name.as_str(), token.as_str(), details).await;
 }
 
-pub async fn send_notification(category: &str, user_name: &str, token: &str, mut details: Value) {
+pub async fn send_notification(_category: &str, _user_name: &str, token: &str, mut details: Value) {
 	let client = fcm::Client::new();
 	let notification_builder = fcm::NotificationBuilder::new();
-	// let mut message=String::new();
-	// if category == "Driver" {
-	// 	notification_builder.title("Ride request!");
-	// 	message=format!("{} has requested a ride!", user_name);
-	// 	notification_builder.body(message.as_str());
-	// 	notification_builder.tag("Ride req");
-	// } else if category == "Owner" {
-	// 	notification_builder.title("Booking notification!");
-	// 	message=format!("{} has booked your car!", user_name);
-	// 	notification_builder.body(message.as_str());
-	// 	notification_builder.tag("Booked car");
-	// }else if category == "taxi_client" {
-	// 	notification_builder.title("Request accepted");
-	// 	notification_builder.body("we found a driver for you!");
-	// 	notification_builder.tag("Request accepted");
-	// }else{
-	// 	notification_builder.title("Invalid category!");
-	// 	notification_builder.body("Invalid category!");
-	// 	notification_builder.tag("Invalid category");
-	// }
 	let notification = notification_builder.finalize();
-	let mut message_builder = fcm::MessageBuilder::new(
-		"AAAA1rzD5J4:APA91bEVDhK6QTL835XVuXPEEA0mbtV1q37zzZeTd0R7w2wHwyh-QyEjYP1CqZ2Jv6GKiSbuOrdLVi62TAThdyy4uPK4rYuphOLQPX_pfsx-l98jUmNPp6l_H7zCD_Jlq2i2-UZVlSXm",
-		&token,
-	);
-	//  "c4JWkJpESg6I1q2irDFAbQ:APA91bGm01z1FVqLvwKr9qhkFauhSlBsN7PNbwnuQ7hjL_-yWTNnBffB5vs-IHePAW9UMQ7KNXl3T4KxxPs2JYKPK8SOa51N9wXPsNHX_Zvm-fB62r0A91x8eCbkxrcWBj3KR0Y0QKpv");
+	let mut message_builder = fcm::MessageBuilder::new(option_env!("NOTIFICATION_API_KEY").expect("NOTIFICATION_API_KEY not set, unable to send notifications"), token);
 	message_builder.notification(notification);
 	message_builder.data(&mut details).unwrap();
 

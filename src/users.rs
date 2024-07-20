@@ -5,7 +5,17 @@ use serde_json::{json, Value};
 use crate::db_client;
 
 #[derive(serde::Deserialize, serde::Serialize, Debug)]
+pub enum UserType {
+	Driver,
+	Owner,
+	Rider,
+	Admin,
+}
+
+#[derive(serde::Deserialize, serde::Serialize, Debug)]
 pub struct User {
+	r#type: UserType,
+
 	email: String,
 	password: String,
 	name: String,
@@ -92,7 +102,7 @@ pub async fn change_category(j: Json<Value>) -> Json<Value> {
 		return Json(p);
 	}
 	let p = json!({"user_id":id,"is_admin":false,"is_driver":false});
-	return Json(p);
+	Json(p)
 }
 
 pub async fn delete_user(j: Json<Value>) -> StatusCode {

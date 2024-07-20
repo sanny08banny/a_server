@@ -1,7 +1,6 @@
 use axum::Json;
 use base64::Engine;
 use chrono::Local;
-use rand::Rng;
 use serde_json::{json, Value};
 
 use crate::ecryption_engine::CUSTOM_ENGINE;
@@ -19,11 +18,6 @@ struct Review {
 pub struct CarReview {
 	owner_id: String,
 	car_id: String,
-	review: Vec<Review>,
-}
-
-struct DriverReview {
-	driver_id: String,
 	review: Vec<Review>,
 }
 
@@ -46,11 +40,11 @@ pub async fn car_review(ids: Json<Value>) -> Json<Value> {
 		"average":5,
 		"comments":[
 			{
-			"user_name":car_rev.review[0].user_name,
-			"title":car_rev.review[0].title,
-			"comment":car_rev.review[0].comment,
-			"rating":car_rev.review[0].rating
-		}
+				"user_name":car_rev.review[0].user_name,
+				"title":car_rev.review[0].title,
+				"comment":car_rev.review[0].comment,
+				"rating":car_rev.review[0].rating
+			}
 		]
 	});
 	Json(r)
@@ -76,26 +70,3 @@ pub async fn post_review(rev: Json<Value>) {
 		rating,
 	};
 }
-
-// creating a psql review table with the followinf columns
-// review_id, taxi_id, client_id, driver_id,title, comment, rating
-// use the following psql command
-// create table taxi_reviews(
-// 	review_id varchar(255) primary key,
-// 	taxi_id varchar(255),
-// 	client_id varchar(255),
-// 	driver_id varchar(255),
-// 	title varchar(255),
-// 	comment text,
-// 	rating float
-// );
-
-// taxi table: taxi_id,driver_id,model,color,image_paths(an array of image paths),plate_number
-// create table taxi(
-// 	taxi_id varchar(255) primary key,
-// 	driver_id varchar(255),
-// 	model varchar(255),
-// 	color varchar(255),
-// 	image_paths text[],
-// 	plate_number varchar(255)
-// );

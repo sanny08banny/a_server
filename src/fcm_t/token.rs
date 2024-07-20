@@ -23,8 +23,11 @@ pub async fn driver_response(res: Json<Value>) -> Result<StatusCode, StatusCode>
 	// let client_token = res["notification_id"].as_str().unwrap();
 	let db = db_client().await;
 	let query = format!("SELECT notification_token FROM users WHERE user_id='{}'", client_id);
-	let res = db.query(query.as_str(), &[]).await.unwrap();
-	let client_token: String = res[0].get("notification_token");
+	let res = db.query_one(query.as_str(), &[]).await.unwrap();
+	let client_token: String = res.get("notification_token");
+
+	let query = format!("SELECT * FROM taxi WHERE user_id='{}'", driver_id);
+	let res = db.query_one(query.as_str(), &[]).await.unwrap();
 
 	let details = json!({
 		"plate_number": "KCA 123",
@@ -33,5 +36,5 @@ pub async fn driver_response(res: Json<Value>) -> Result<StatusCode, StatusCode>
 	});
 	send_notification("taxi_client", "", &client_token, details).await;
 	println!("{} {}", client_id, status);
-	return Ok(StatusCode::OK);
+	Ok(StatusCode::OK)
 }

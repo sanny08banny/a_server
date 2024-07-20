@@ -3,3 +3,4 @@
 /verification_docs
 ./Cargo.lock
 run.log
+.env

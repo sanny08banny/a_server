@@ -6,7 +6,8 @@ use std::{
 use axum::{extract::Path, response::Response};
 use hyper::Body;
 // parent_folder images or docs
-pub async fn file_handler(Path((parent_folder, vehicle_category, user_id, car_id, file)): Path<(String, String, String, String, String)>) -> Response<Body> {
+pub async fn file_handler(extract: Path<(String, String, String, String, String)>) -> Response<Body> {
+	let Path((parent_folder, vehicle_category, user_id, car_id, file)) = extract;
 	let path = format!("{}/{}/{}/{}/{}", parent_folder, vehicle_category, user_id, car_id, file);
 	let h = File::open(path).expect("file not found");
 	let mut buf_reader = BufReader::new(h);
