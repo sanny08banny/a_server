@@ -1,8 +1,10 @@
 use axum::Json;
+use base64::Engine;
+use chrono::Local;
 use hyper::StatusCode;
 use serde_json::{json, Value};
 
-use crate::db_client;
+use crate::{db_client, ecryption_engine::CUSTOM_ENGINE};
 
 #[derive(serde::Deserialize, serde::Serialize, Debug)]
 pub enum UserType {
@@ -36,10 +38,13 @@ pub async fn create_user(user: Json<User>) -> StatusCode {
 		UserType::Admin => {is_admin=true},
 		_=>{}
 	}
+	let timestamp = Local::now().format("%Y%m%d%H%M%S").to_string();
+	let input = format!("{}-{}", email, timestamp);
+	let user_id=CUSTOM_ENGINE.encode(input);
 	let user_name = user.name;
 	let q = format!(
-		"INSERT INTO users (email,password,tokens,isadmin,isdriver,notification_token,user_name) VALUES ('{}','{}','{}','{}','{}','{}','{}')",
-		email, password, r_tokens, is_admin, is_driver, notification_id, user_name
+		"INSERT INTO users (user_id,email,password,tokens,isadmin,isdriver,notification_token,user_name) VALUES ('{}','{}','{}','{}','{}','{}','{}','{}')",
+		user_id,email, password, r_tokens, is_admin, is_driver, notification_id, user_name
 	);
 	let res = g.execute(q.as_str(), &[]).await;
 	if res.is_err() {
