@@ -37,7 +37,7 @@ pub async fn init_taxi(db: State<DbClient>, taxi: Json<Taxi>) -> String {
 	.unwrap();
 	statement="INSERT INTO taxi_verifications (
 	driver_id,
-	inspection_report
+	inspection_report,
 	insurance,
 	driving_licence,
 	psv_licence,
