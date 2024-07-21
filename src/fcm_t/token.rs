@@ -25,7 +25,7 @@ pub async fn driver_response(db: State<DbClient>, res: Json<Value>) -> StatusCod
 
 	let Ok(res) = db.query_one("SELECT plate_number,color,model FROM taxi WHERE user_id='$1'", &[&driver_id]).await else {
 		return StatusCode::INTERNAL_SERVER_ERROR;
-	};1
+	};
 
 	let details = json!({
 		"plate_number": res.get::<_,&str>("plate_number"),

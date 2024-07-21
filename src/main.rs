@@ -18,7 +18,6 @@ mod fcm_t;
 mod file_server;
 mod payment_gateway;
 mod review;
-mod rides;
 mod search;
 mod tokens;
 mod users;

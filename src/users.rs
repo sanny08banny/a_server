@@ -20,6 +20,7 @@ pub struct User {
 	email: String,
 	password: String,
 	name: String,
+	tel:String,
 	notification_id: String,
 }
 
@@ -30,12 +31,12 @@ pub async fn create_user(db: State<DbClient>, user: Json<User>) -> StatusCode {
 	let is_admin = matches!(user.user_type, UserType::Admin);
 
 	let timestamp = Local::now().format("%Y%m%d%H%M%S").to_string();
-	let input = format!("{}-{}", &user.email, timestamp);
+	let input = format!("{}-{}-{}", &user.email, timestamp,&user.tel);
 	let user_id = CUSTOM_ENGINE.encode(input);
 
-	let statement = "INSERT INTO users (user_id,email,password,tokens,isadmin,isdriver,notification_token,user_name) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)";
+	let statement = "INSERT INTO users (user_id,email,user_phone,password,tokens,isadmin,isdriver,notification_token,user_name) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)";
 	let res = db
-		.execute(statement, &[&user_id, &user.email, &user.password, &600i64, &is_admin, &is_driver, &user.notification_id, &user.name])
+		.execute(statement, &[&user_id, &user.email, &user.tel,&user.password, &600i64, &is_admin, &is_driver, &user.notification_id, &user.name])
 		.await;
 
 	match res {

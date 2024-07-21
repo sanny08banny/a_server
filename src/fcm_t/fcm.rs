@@ -3,10 +3,17 @@ use axum::{extract::State, Json};
 use fcm;
 use serde_json::{json, Value};
 
+pub const EARTH_RADIUS: f32 = 6_366_707.0195;
+
 pub async fn req_ride(db: State<DbClient>, details: Json<Vec<Value>>) {
+	let closest_driver: usize = 0;
 	for detail in details.0.iter().cloned() {
-		start_notification(&db.0, detail, "Driver").await;
+		let client_lat = detail["current_lat"].as_f64().unwrap();
+		let client_log = detail["current_lon"].as_f64().unwrap();
+		let driver_lat = 0.00;
+		let driver_lon = 0.00;
 	}
+	start_notification(&db.0, details.0[closest_driver].clone(), "Driver").await;
 }
 
 pub async fn book_car(db: State<DbClient>, detail: Json<Value>) {
@@ -34,8 +41,7 @@ async fn start_notification(db: &DbClient, det: Value, category: &str) {
 		{
 			"ride_id": sender_id.to_owned()+"_"+recipient,
 			"user_name": user_name,
-			// "client_token": client_token,
-			// "user_phone": user_phone,
+			"user_phone": det["phone_number"].as_str().unwrap(),
 			"dest_lat": det["dest_lat"].as_f64().unwrap(),
 			"dest_lon": det["dest_lon"].as_f64().unwrap(),
 			"current_lat": det["current_lat"].as_f64().unwrap(),
@@ -67,7 +73,7 @@ async fn start_notification(db: &DbClient, det: Value, category: &str) {
 	send_notification(token.as_str(), details).await;
 }
 
-pub async fn send_notification( token: &str, mut details: Value) {
+pub async fn send_notification(token: &str, mut details: Value) {
 	let client = fcm::Client::new();
 	let notification_builder = fcm::NotificationBuilder::new();
 	let notification = notification_builder.finalize();
