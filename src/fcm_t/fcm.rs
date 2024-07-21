@@ -5,6 +5,19 @@ use serde_json::{json, Value};
 
 pub const EARTH_RADIUS: f32 = 6_366_707.0195;
 
+pub fn great_circle_distance(a: (f32, f32), b: (f32, f32)) -> f32 {
+	let lat1 = a.0.to_radians();
+	let lon1 = a.1.to_radians();
+	let lat2 = b.0.to_radians();
+	let lon2 = b.1.to_radians();
+
+	let delta_lon = lon2 - lon1;
+
+	let central_angle = (lat1.sin() * lat2.sin() + lat1.cos() * lat2.cos() * delta_lon.cos()).acos();
+
+	central_angle * EARTH_RADIUS
+}
+
 pub async fn req_ride(db: State<DbClient>, details: Json<Vec<Value>>) {
 	let closest_driver: usize = 0;
 	for detail in details.0.iter().cloned() {
@@ -33,7 +46,7 @@ async fn start_notification(db: &DbClient, det: Value, category: &str) {
 	let recipient = det["recipient_id"].as_str().unwrap();
 
 	// get username from db
-	let res = db.query("SELECT user_name, user_phone FROM users WHERE user_id=$1", &[&sender_id]).await.unwrap();
+	let res = db.query("SELECT user_name,user_phone FROM users WHERE user_id=$1", &[&sender_id]).await.unwrap();
 	let user_name: String = res[0].get("user_name");
 
 	let details = if category == "Driver" {
