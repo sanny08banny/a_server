@@ -48,7 +48,7 @@ pub async fn accept_book(db: State<DbClient>, details: Json<BookingRequest>) -> 
 	let request = details.0;
 	let mut details = json!({
 		"client_id":request.owner_id,
-		"recepient_id":request.user_id,
+		"recipient_id":request.user_id,
 	});
 
 	match request.description {

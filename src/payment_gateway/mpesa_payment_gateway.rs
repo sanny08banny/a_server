@@ -4,7 +4,7 @@ use chrono::Local;
 use reqwest::{header, Client};
 use serde_json::{json, Value};
 
-use crate::ecryption_engine::CUSTOM_ENGINE;
+use crate::encryption_engine::CUSTOM_ENGINE;
 use crate::payment_gateway::merchant_portal::Merchant;
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct MpesaPaymentProcessor {

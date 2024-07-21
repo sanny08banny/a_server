@@ -3,7 +3,7 @@ use base64::Engine;
 use chrono::Local;
 use serde_json::Value;
 
-use crate::ecryption_engine::CUSTOM_ENGINE;
+use crate::encryption_engine::CUSTOM_ENGINE;
 
 #[derive(serde::Deserialize, serde::Serialize)]
 struct Comment {
@@ -27,7 +27,7 @@ pub async fn get_review(ids: Json<Value>) -> Json<CarReview> {
 	let car_id = ids.get("car_id").unwrap().to_string();
 	let owner_id = ids.get("owner_id").unwrap().to_string();
 
-	// TODO: fecth review from DB
+	// TODO: fetch review from DB
 	let comment = Comment {
 		id: "get from db".to_string(),
 		user_name: "USER_NAME".to_string(),

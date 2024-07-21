@@ -4,7 +4,7 @@ use chrono::Local;
 use hyper::StatusCode;
 use serde_json::{json, Value};
 
-use crate::{db_client::DbClient, ecryption_engine::CUSTOM_ENGINE};
+use crate::{db_client::DbClient, encryption_engine::CUSTOM_ENGINE};
 
 #[derive(serde::Deserialize, serde::Serialize, Debug)]
 pub enum UserType {

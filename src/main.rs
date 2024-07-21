@@ -13,7 +13,7 @@ use users::{change_category, create_user, user_login};
 
 mod cars;
 mod db_client;
-mod ecryption_engine;
+mod encryption_engine;
 mod fcm_t;
 mod file_server;
 mod payment_gateway;
@@ -60,7 +60,7 @@ async fn main() {
 		.route("/v1/:driver_id/document/unverified/:type", get(get_unverified_document))
 		.route("/v1/:driver_id/document/verify/:type", get(verify_document))
 		// rides
-		 
+		// history
 		.with_state(db)
 		.layer(CorsLayer::permissive());
 

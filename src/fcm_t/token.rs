@@ -1,40 +1,39 @@
+use axum::extract::State;
 use axum::{extract::Path, Json};
 use hyper::StatusCode;
 use serde_json::{json, Value};
 
-use crate::db_client::db_client;
+use crate::db_client::DbClient;
 use crate::fcm_t::fcm::send_notification;
 
-pub async fn update_token(h: Path<(String, String)>) -> Result<StatusCode, StatusCode> {
-	let user_id = h.0 .0;
-	let token = h.0 .1;
-	let db = db_client().await;
-	println!("{} {}", user_id, token);
-	let query = format!("UPDATE users SET notification_token='{}' WHERE user_id='{}'", token, user_id);
-	db.execute(query.as_str(), &[]).await.unwrap();
-	Ok(StatusCode::OK)
+pub async fn update_token(db: State<DbClient>, Path((user_id, token)): Path<(String, String)>) -> StatusCode {
+	match db.execute("UPDATE users SET notification_token=$1 WHERE user_id=$2", &[&token, &user_id]).await {
+		Ok(_) => StatusCode::OK,
+		Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
+	}
 }
 
-pub async fn driver_response(res: Json<Value>) -> Result<StatusCode, StatusCode> {
+pub async fn driver_response(db: State<DbClient>, res: Json<Value>) -> StatusCode {
 	let res = res.0;
 	let client_id = res["client_id"].as_str().unwrap();
-	let status = res["status"].as_str().unwrap();
 	let driver_id = res["driver_id"].as_str().unwrap();
-	// let client_token = res["notification_id"].as_str().unwrap();
-	let db = db_client().await;
-	let query = format!("SELECT notification_token FROM users WHERE user_id='{}'", client_id);
-	let res = db.query_one(query.as_str(), &[]).await.unwrap();
-	let client_token: String = res.get("notification_token");
 
-	let query = format!("SELECT * FROM taxi WHERE user_id='{}'", driver_id);
-	let res = db.query_one(query.as_str(), &[]).await.unwrap();
+	let Ok(res) = db.query_one("SELECT notification_token,user_name FROM users WHERE user_id=$1", &[&client_id]).await else {
+		return StatusCode::INTERNAL_SERVER_ERROR;
+	};
+	let client_token: String = res.get("notification_token");
+	let user_name: String = res.get("user_name");
+
+	let Ok(res) = db.query_one("SELECT plate_number,color,model FROM taxi WHERE user_id='$1'", &[&driver_id]).await else {
+		return StatusCode::INTERNAL_SERVER_ERROR;
+	};
 
 	let details = json!({
 		"plate_number": res.get::<_,&str>("plate_number"),
 		"color":res.get::<_,&str>("color"),
 		"model":res.get::<_,&str>("model"),
 	});
-	send_notification("taxi_client", "", &client_token, details).await;
-	println!("{} {}", client_id, status);
-	Ok(StatusCode::OK)
+
+	send_notification("taxi_client", &user_name, &client_token, details).await;
+	StatusCode::OK
 }
