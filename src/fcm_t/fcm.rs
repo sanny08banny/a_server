@@ -3,9 +3,9 @@ use axum::{extract::State, Json};
 use fcm;
 use serde_json::{json, Value};
 
-pub const EARTH_RADIUS: f32 = 6_366_707.0195;
+pub const EARTH_RADIUS: f64 = 6_366_707.0195;
 
-pub fn great_circle_distance(a: (f32, f32), b: (f32, f32)) -> f32 {
+pub fn great_circle_distance(a: (f64, f64), b: (f64, f64)) -> f64 {
 	let lat1 = a.0.to_radians();
 	let lon1 = a.1.to_radians();
 	let lat2 = b.0.to_radians();
@@ -19,12 +19,22 @@ pub fn great_circle_distance(a: (f32, f32), b: (f32, f32)) -> f32 {
 }
 
 pub async fn req_ride(db: State<DbClient>, details: Json<Vec<Value>>) {
-	let closest_driver: usize = 0;
+	let mut closest_driver: usize = 0;
+	let mut min_distance=0.00;
+	let mut i=0;
 	for detail in details.0.iter().cloned() {
 		let client_lat = detail["current_lat"].as_f64().unwrap();
 		let client_log = detail["current_lon"].as_f64().unwrap();
 		let driver_lat = 0.00;
-		let driver_lon = 0.00;
+		let driver_lon: f64 = 0.00;
+		let distance=great_circle_distance((client_lat,client_log), (driver_lat,driver_lon));
+		if i==0{
+			min_distance=distance;
+		}else if distance<min_distance{
+			min_distance=distance;
+			closest_driver=i;
+		}
+		i+=1;
 	}
 	start_notification(&db.0, details.0[closest_driver].clone(), "Driver").await;
 }
