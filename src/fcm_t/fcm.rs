@@ -22,7 +22,7 @@ pub async fn book_request_status(db: State<DbClient>, detail: Json<Value>) {
 }
 
 async fn start_notification(db: &DbClient, det: Value, category: &str) {
-	let sender_id = det["client_id"].as_str().unwrap();
+	let sender_id = det["sender_id"].as_str().unwrap();
 	let recipient = det["recipient_id"].as_str().unwrap();
 
 	// get username from db
@@ -40,7 +40,7 @@ async fn start_notification(db: &DbClient, det: Value, category: &str) {
 			"dest_lon": det["dest_lon"].as_f64().unwrap(),
 			"current_lat": det["current_lat"].as_f64().unwrap(),
 			"current_lon": det["current_lon"].as_f64().unwrap(),
-			"client_id": sender_id,
+			"sender_id": sender_id,
 		})
 	} else if category == "Owner" {
 		json!(
@@ -49,7 +49,7 @@ async fn start_notification(db: &DbClient, det: Value, category: &str) {
 			"user_name": user_name,
 			// "user_phone": user_phone,
 			"car_id": det["car_id"].as_str().unwrap(),
-			"client_id": sender_id,
+			"sender_id": sender_id,
 		})
 	} else if category == "Normal" && det["status"].as_str().unwrap() == "accepted" {
 		json!({
@@ -61,14 +61,13 @@ async fn start_notification(db: &DbClient, det: Value, category: &str) {
 		})
 	};
 
-	let query = format!("SELECT notification_token FROM users WHERE user_id='{}'", recipient);
-	let res = db.query(query.as_str(), &[]).await.unwrap();
+	let res = db.query("SELECT notification_token FROM users WHERE user_id=$1", &[&recipient]).await.unwrap();
 	let token: String = res[0].get("notification_token");
 	println!("recipient notification token: {:?}", token);
-	send_notification(category, user_name.as_str(), token.as_str(), details).await;
+	send_notification(token.as_str(), details).await;
 }
 
-pub async fn send_notification(_category: &str, _user_name: &str, token: &str, mut details: Value) {
+pub async fn send_notification( token: &str, mut details: Value) {
 	let client = fcm::Client::new();
 	let notification_builder = fcm::NotificationBuilder::new();
 	let notification = notification_builder.finalize();
