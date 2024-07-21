@@ -1,4 +1,5 @@
 use axum::body::Body;
+use axum::extract::Path;
 use axum::response::IntoResponse;
 use axum::{extract::State, Json};
 use base64::Engine;
@@ -140,7 +141,7 @@ national_id
 // taxi table + verified column
 
 // accessible to both the driver and admin
-pub async fn get_unverified_documents(db: State<DbClient>, driver_id: String) -> impl IntoResponse {
+pub async fn get_unverified_documents(db: State<DbClient>, Path(driver_id): Path<String>) -> impl IntoResponse {
 	let verification_documents = db.query_opt("SELECT * FROM taxi_verifications WHERE driver_id=$1", &[&driver_id]).await.unwrap();
 
 	match verification_documents {
@@ -168,23 +169,17 @@ enum VerificationDocumentType {
 	InspectionReport,
 }
 
-#[derive(serde::Deserialize, serde::Serialize)]
-pub struct VerificationObject {
-	driver_id: String,
-	document_type: VerificationDocumentType,
-}
-
-pub async fn get_unverified_document(req: Json<VerificationObject>) -> impl IntoResponse {
-	// Response::new(Body::from(file_content()))
-	let path = match req.0.document_type {
-		VerificationDocumentType::NationalId => "national_id_front.png",
-		VerificationDocumentType::Insurance => "insurance.png",
-		VerificationDocumentType::DrivingLicense => "driving_licence.png",
-		VerificationDocumentType::PSVLicense => "psv_licence.png",
-		VerificationDocumentType::InspectionReport => "inspection_report.png",
+pub async fn get_unverified_document(Path((driver_id, document_type)): Path<(String, String)>) -> impl IntoResponse {
+	let path = match document_type.as_str() {
+		"NationalId" => "national_id_front.png",
+		"Insurance" => "insurance.png",
+		"DrivingLicense" => "driving_licence.png",
+		"PSVLicense" => "psv_licence.png",
+		"InspectionReport" => "inspection_report.png",
+		_ => return (StatusCode::BAD_REQUEST, Body::empty()),
 	};
 
-	let path = format!("images/taxi/{}/{}", req.driver_id, path);
+	let path = format!("images/taxi/{}/{}", driver_id, path);
 	let Ok(file) = File::open(path).await else {
 		return (StatusCode::NOT_FOUND, Body::empty());
 	};
@@ -193,23 +188,19 @@ pub async fn get_unverified_document(req: Json<VerificationObject>) -> impl Into
 	(StatusCode::OK, Body::from_stream(stream))
 }
 
-pub async fn verify_document(db: State<DbClient>, req: Json<VerificationObject>) -> StatusCode {
-	let modified: u64;
-	match req.0.document_type {
-		VerificationDocumentType::NationalId => modified = db.0.execute("UPDATE taxi_verifications SET national_id=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap(),
-		VerificationDocumentType::Insurance => modified = db.0.execute("UPDATE taxi_verifications SET  insurance=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap(),
-		VerificationDocumentType::DrivingLicense => modified = db.0.execute("UPDATE taxi_verifications SET driving_license=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap(),
-		VerificationDocumentType::PSVLicense => modified = db.0.execute("UPDATE taxi_verifications SET psv_license=true WHERE driver_id=$1", &[&req.driver_id]).await.unwrap(),
-		VerificationDocumentType::InspectionReport => {
-			modified =
-				db.0.execute("UPDATE taxi_verifications SET inspection_report=true WHERE driver_id=$1", &[&req.driver_id])
-					.await
-					.unwrap()
-		}
-	}
-	if modified == 1 {
-		StatusCode::OK
-	} else {
-		StatusCode::NOT_MODIFIED
+pub async fn verify_document(db: State<DbClient>, Path((driver_id, document_type)): Path<(String, String)>) -> StatusCode {
+	let column = match document_type.as_str() {
+		"NationalId" => "national_id",
+		"Insurance" => "insurance",
+		"DrivingLicense" => "driving_license",
+		"PSVLicense" => "psv_license",
+		"InspectionReport" => "inspection_report",
+		_ => return StatusCode::BAD_REQUEST,
+	};
+
+	let query = format!("UPDATE taxi_verifications SET {}=true WHERE driver_id=$1", column);
+	match db.0.execute(&query, &[&driver_id]).await {
+		Ok(_) => StatusCode::OK,
+		_ => StatusCode::INTERNAL_SERVER_ERROR,
 	}
 }

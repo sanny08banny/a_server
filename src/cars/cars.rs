@@ -9,8 +9,6 @@ use hyper::StatusCode;
 use postgres_from_row::FromRow;
 use serde_json::{json, Value};
 
-use crate::db_client;
-
 #[derive(serde::Deserialize, serde::Serialize, FromRow)]
 pub struct Car {
 	pub car_images: Vec<String>,
@@ -55,15 +53,14 @@ pub async fn accept_book(db: State<DbClient>, details: Json<BookingRequest>) -> 
 
 	match request.description {
 		BookingDetailsDesc::Book => {
-			let g = db_client().await;
 			let y = format!("SELECT booking_tokens FROM car WHERE car_id='{}'", request.car_id);
-			let rows = g.query(y.as_str(), &[]).await.unwrap();
+			let rows = db.query(y.as_str(), &[]).await.unwrap();
 			let mut booking_tokens = 0.00;
 			for row in rows {
 				booking_tokens = row.get::<_, f64>("booking_tokens");
 			}
 			let x = format!("SELECT tokens FROM users WHERE user_id='{}'", request.user_id);
-			let rows = g.query(x.as_str(), &[]).await.unwrap();
+			let rows = db.query(x.as_str(), &[]).await.unwrap();
 			let mut user_tokens = 0.00;
 			for row in rows {
 				user_tokens = row.get::<_, f64>("tokens");
@@ -73,7 +70,7 @@ pub async fn accept_book(db: State<DbClient>, details: Json<BookingRequest>) -> 
 			}
 			let new_user_tokens = user_tokens - booking_tokens;
 			let x = format!("UPDATE users SET tokens='{}' WHERE user_id='{}'", new_user_tokens, request.user_id);
-			g.execute(x.as_str(), &[]).await.unwrap();
+			db.execute(x.as_str(), &[]).await.unwrap();
 			details["status"] = Value::String("accepted".to_string());
 			book_request_status(db, Json(details)).await;
 
@@ -88,7 +85,7 @@ pub async fn accept_book(db: State<DbClient>, details: Json<BookingRequest>) -> 
 	}
 }
 
-pub async fn multi_upload(mut multipart: Multipart) -> StatusCode {
+pub async fn multi_upload(db: State<DbClient>, mut multipart: Multipart) -> StatusCode {
 	let mut user_id = String::new();
 	let mut car_id = String::new();
 	let mut model = String::new();
@@ -101,7 +98,7 @@ pub async fn multi_upload(mut multipart: Multipart) -> StatusCode {
 	let mut file_path = String::new();
 	let mut index = 0;
 	let mut category = String::new();
-	let g = db_client().await;
+
 	while let Some(field) = multipart.next_field().await.unwrap() {
 		let name = field.name().unwrap().to_string();
 		println!("{:?}", name);
@@ -209,7 +206,7 @@ pub async fn multi_upload(mut multipart: Multipart) -> StatusCode {
 	if category == "car_hire" {
 		if c > 0 {
 			let q = format!("UPDATE car SET car_images={} WHERE car_id='{}'", images, car_id);
-			g.execute(q.as_str(), &[]).await.unwrap();
+			db.execute(q.as_str(), &[]).await.unwrap();
 		} else {
 			println!("{}", images);
 			let token = 10.0;
@@ -221,11 +218,11 @@ pub async fn multi_upload(mut multipart: Multipart) -> StatusCode {
           ('{}','{}', {}, '{}', '{}', '{}', {}, {}, {},{})",
 				car_id, images, model, user_id, location, description, daily_price, daily_down_payment, available, token
 			);
-			g.execute(q.as_str(), &[]).await.unwrap();
+			db.execute(q.as_str(), &[]).await.unwrap();
 		}
 	} else if category == "taxi" && c > 0 {
 		let q = format!("UPDATE taxi SET image_paths={} WHERE taxi_id='{}'", images, car_id);
-		g.execute(q.as_str(), &[]).await.unwrap();
+		db.execute(q.as_str(), &[]).await.unwrap();
 	}
 	StatusCode::OK
 }
@@ -236,12 +233,11 @@ fn save_file(parent_dir_path: &str, filename: &str, data: &[u8]) {
 	file.write_all(data).unwrap();
 }
 
-pub async fn delete_car(car_details: Json<Value>) -> StatusCode {
+pub async fn delete_car(db: State<DbClient>, car_details: Json<Value>) -> StatusCode {
 	let car_id = car_details["car_id"].as_str().unwrap();
 	let owner_id = car_details["owner_id"].as_str().unwrap();
-	let g = db_client().await;
 	let q = format!("DELETE FROM car WHERE car_id='{}' AND owner_id='{}'", car_id, owner_id);
-	let x = g.execute(q.as_str(), &[]).await.unwrap();
+	let x = db.execute(q.as_str(), &[]).await.unwrap();
 	if x == 0 {
 		return StatusCode::NOT_FOUND;
 	}

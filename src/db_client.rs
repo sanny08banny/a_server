@@ -13,7 +13,7 @@ impl std::ops::Deref for DbClient {
 	}
 }
 
-pub async fn db_client() -> DbClient {
+pub(super) async fn db_client() -> DbClient {
 	let host = "localhost";
 	let user = "ubuntu";
 	let password = "new_password";
