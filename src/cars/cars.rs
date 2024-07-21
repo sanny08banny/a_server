@@ -117,11 +117,11 @@ pub async fn multi_upload(mut multipart: Multipart) -> StatusCode {
 			}
 			"user_id" => {
 				user_id = field.text().await.unwrap().replace('"', "");
-				file_path=file_path + &user_id + "/";
+				file_path = file_path + &user_id + "/";
 			}
 			"car_id" => {
 				car_id = field.text().await.unwrap().replace('"', "");
-				if category=="hire"{
+				if category == "hire" {
 					file_path = file_path + &car_id + "/";
 				}
 				match fs::create_dir_all(&file_path) {
@@ -223,7 +223,7 @@ pub async fn multi_upload(mut multipart: Multipart) -> StatusCode {
 			);
 			g.execute(q.as_str(), &[]).await.unwrap();
 		}
-	} else if category == "taxi" && c>0{
+	} else if category == "taxi" && c > 0 {
 		let q = format!("UPDATE taxi SET image_paths={} WHERE taxi_id='{}'", images, car_id);
 		g.execute(q.as_str(), &[]).await.unwrap();
 	}

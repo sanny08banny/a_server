@@ -1,11 +1,13 @@
 use crate::db_client::db_client;
 use axum::routing::{get, post, Router};
-use cars::{cars::{accept_book, get_cars, multi_upload, Car}, taxi::{get_unverified_document, get_unverified_documents, get_unverified_taxis, verify_document}};
+use cars::{
+	cars::{accept_book, get_cars, multi_upload, Car},
+	taxi::{get_unverified_document, get_unverified_documents, get_unverified_taxis, verify_document},
+};
 use fcm_t::{fcm::req_ride, token::update_token};
 use file_server::file_handler;
 use payment_gateway::mpesa_payment_gateway::{call_back_url, process_payment};
-use review::{car_review, post_review};
-use std::net::SocketAddr;
+use review::{get_review, create_review};
 use tokens::r_tokens::query_token;
 use tower_http::cors::CorsLayer;
 use users::{change_category, create_user, user_login};
@@ -25,8 +27,8 @@ use crate::search::search;
 
 #[tokio::main]
 async fn main() {
-	let addr = "0.0.0.0:4000";
-	let client = db_client().await;
+	let listener = tokio::net::TcpListener::bind("0.0.0.0:4000").await.unwrap();
+	let db = db_client().await;
 
 	let app = Router::new()
 		.route("/v1/cars", get(get_cars))
@@ -38,8 +40,8 @@ async fn main() {
 		.route("/v1/path", post(call_back_url))
 		.route("/v1/user/new", post(create_user))
 		.route("/v1/user/login", post(user_login))
-		.route("/v1/car/review", post(car_review))
-		.route("/v1/car/create_review", post(post(post_review)))
+		.route("/v1/car/review", post(get_review))
+		.route("/v1/car/create_review", post(post(create_review)))
 		.route("/v1/user/admin_req", post(change_category))
 		.route("/v1/req_ride", post(req_ride))
 		.route("/v1/book_car", post(fcm_t::fcm::book_car))
@@ -53,15 +55,12 @@ async fn main() {
 		.route("/v1/ride_req_status", post(fcm_t::fcm::ride_request_status))
 		.route("/v1/book_req_status", post(fcm_t::fcm::book_request_status))
 		// taxi verification
-		.route("/v1/get_unverified_taxis",get(get_unverified_taxis))
+		.route("/v1/get_unverified_taxis", get(get_unverified_taxis))
 		.route("/v1/get_unverified_documents", post(get_unverified_documents))
 		.route("/v1/get_unverified_document", post(get_unverified_document))
-		.route("/v1/verify_document",post(verify_document))
-		.with_state(client)
+		.route("/v1/verify_document", post(verify_document))
+		.with_state(db)
 		.layer(CorsLayer::permissive());
 
-	axum::Server::bind(&addr.trim().parse().expect("Invalid address"))
-		.serve(app.into_make_service_with_connect_info::<SocketAddr>())
-		.await
-		.unwrap();
+	axum::serve(listener, app).await.unwrap()
 }

@@ -1,22 +1,19 @@
-use std::{
-	fs::File,
-	io::{BufReader, Read},
-};
+use axum::{body::Body, extract::Path, response::IntoResponse};
+use hyper::StatusCode;
+use tokio::fs::File;
+use tokio_util::io::ReaderStream;
 
-use axum::{extract::Path, response::Response};
-use hyper::Body;
 // parent_folder images or docs
-pub async fn file_handler(extract: Path<(String, String, String, String, String)>) -> Response<Body> {
+pub async fn file_handler(extract: Path<(String, String, String, String, String)>) -> impl IntoResponse {
 	let Path((parent_folder, vehicle_category, user_id, car_id, file)) = extract;
 	let path = format!("{}/{}/{}/{}/{}", parent_folder, vehicle_category, user_id, car_id, file);
-	Response::new(Body::from(file_content(path)))
+
+	match read_file_stream(&path).await {
+		Some(stream) => (StatusCode::OK, Body::from_stream(stream)),
+		None => (StatusCode::OK, Body::empty()),
+	}
 }
 
-
-pub fn file_content(path:String)->Vec<u8>{
-	let h = File::open(path).expect("file not found");
-	let mut buf_reader = BufReader::new(h);
-	let mut contents = Vec::new();
-	buf_reader.read_to_end(&mut contents).unwrap();
-	contents
+pub async fn read_file_stream(path: &str) -> Option<ReaderStream<File>> {
+	File::open(path).await.map(|f| ReaderStream::new(f)).ok()
 }

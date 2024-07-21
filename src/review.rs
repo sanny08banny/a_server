@@ -1,12 +1,12 @@
 use axum::Json;
 use base64::Engine;
 use chrono::Local;
-use serde_json::{json, Value};
+use serde_json::Value;
 
 use crate::ecryption_engine::CUSTOM_ENGINE;
 
 #[derive(serde::Deserialize, serde::Serialize)]
-struct Review {
+struct Comment {
 	id: String,
 	user_name: String,
 	title: String,
@@ -14,43 +14,37 @@ struct Review {
 	rating: f64,
 }
 
-#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(serde::Serialize)]
 pub struct CarReview {
 	owner_id: String,
 	car_id: String,
-	review: Vec<Review>,
+	score: f32,
+	comments: Vec<Comment>,
 }
 
-pub async fn car_review(ids: Json<Value>) -> Json<Value> {
+pub async fn get_review(ids: Json<Value>) -> Json<CarReview> {
 	let ids = ids.0;
 	let car_id = ids.get("car_id").unwrap().to_string();
 	let owner_id = ids.get("owner_id").unwrap().to_string();
 
-	let rev = Review {
+	// TODO: fecth review from DB
+	let comment = Comment {
 		id: "get from db".to_string(),
 		user_name: "USER_NAME".to_string(),
 		title: "This the title".to_string(),
 		comment: "Awesome".to_string(),
 		rating: 5.0,
 	};
-	let car_rev = CarReview { owner_id, car_id, review: vec![rev] };
-	let r = json!({
-		"car_id":car_rev.car_id,
-		"owner_id":car_rev.owner_id,
-		"average":5,
-		"comments":[
-			{
-				"user_name":car_rev.review[0].user_name,
-				"title":car_rev.review[0].title,
-				"comment":car_rev.review[0].comment,
-				"rating":car_rev.review[0].rating
-			}
-		]
-	});
-	Json(r)
+
+	Json(CarReview {
+		owner_id,
+		car_id,
+		score: 3.5,
+		comments: vec![comment],
+	})
 }
 
-pub async fn post_review(rev: Json<Value>) {
+pub async fn create_review(rev: Json<Value>) {
 	let rev = rev.0;
 	let user_name = rev.get("user_id").unwrap().to_string();
 	let title = rev.get("title").unwrap().to_string();
@@ -62,7 +56,7 @@ pub async fn post_review(rev: Json<Value>) {
 	let input = format!("{}{}{}", car_id, owner_id, timestamp);
 	let id = CUSTOM_ENGINE.encode(input);
 
-	let rev = Review {
+	let rev = Comment {
 		id,
 		user_name,
 		title,
