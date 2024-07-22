@@ -99,8 +99,10 @@ pub async fn init_taxi(db: State<DbClient>, taxi: Json<Taxi>) -> impl IntoRespon
 	if let Err(err) = db.execute(statement, &[&taxi.driver_id, &false, &false, &false, &false, &false]).await {
 		return (StatusCode::INTERNAL_SERVER_ERROR, err.to_string());
 	};
-
-	(StatusCode::OK, taxi_id)
+	match db.execute("UPDATE users SET isdriver=true WHERE user_id=$1", &[&taxi.driver_id]).await {
+		Ok(_) => (StatusCode::OK, taxi_id),
+		Err(e) => (StatusCode::INTERNAL_SERVER_ERROR,e.to_string()),
+	}
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
