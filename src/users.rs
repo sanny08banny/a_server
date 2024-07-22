@@ -34,7 +34,7 @@ pub async fn create_user(db: State<DbClient>, user: Json<User>) -> StatusCode {
 	let res = db
 		.execute(statement, &[&user_id, &user.email, &user.tel,&user.password, &600i64, &false, &false, &user.notification_id, &user.name])
 		.await;
-
+	println!("{:?}",res);
 	match res {
 		Ok(_) => StatusCode::OK,
 		Err(_) => StatusCode::NOT_MODIFIED,
