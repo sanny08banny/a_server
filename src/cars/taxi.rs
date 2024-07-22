@@ -120,7 +120,7 @@ pick_up_longitude:f64,
 dest_latitude:f64,
 dest_longitude:i32,
 taxi_category:TaxiCategory,
-price:i32,
+price:f64,
 declined:Vec<String>,
 pub iteration:i32,
 phone_number:String
@@ -140,6 +140,17 @@ pub fn great_circle_distance(a: (f64, f64), b: (f64, f64)) -> f64 {
 	let central_angle = (lat1.sin() * lat2.sin() + lat1.cos() * lat2.cos() * delta_lon.cos()).acos();
 
 	central_angle * EARTH_RADIUS
+}
+
+pub async fn taxi_price(ride_details: Json<RideDetails>)->String{
+let distance=great_circle_distance((ride_details.pick_up_latitude,ride_details.pick_up_longitude), (ride_details.dest_latitude,ride_details.pick_up_longitude))/1000.00;
+let price:f64;
+match ride_details.taxi_category {
+	TaxiCategory::Economy => price=distance*50.00,
+	TaxiCategory::X => price=distance*55.00,
+	TaxiCategory::Xl => price=distance*65.00
+}
+price.round().to_string()
 }
 
 pub async fn reqest_ride(db: State<DbClient>,ride_details: Json<RideDetails>) {
