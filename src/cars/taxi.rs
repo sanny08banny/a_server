@@ -153,9 +153,9 @@ pub async fn taxi_price(ride_details: Json<PricingDetails>)->String{
 let distance=great_circle_distance((ride_details.pick_up_latitude,ride_details.pick_up_longitude), (ride_details.dest_latitude,ride_details.pick_up_longitude))/1000.00;
 let price:f64;
 match ride_details.taxi_category {
-	TaxiCategory::Economy => price=distance*50.00,
-	TaxiCategory::X => price=distance*55.00,
-	TaxiCategory::Xl => price=distance*65.00
+	TaxiCategory::Economy => price=distance*50.00+120.00,
+	TaxiCategory::X => price=distance*55.00+150.00,
+	TaxiCategory::Xl => price=distance*65.00+200.00
 }
 price.round().to_string()
 }
