@@ -1,7 +1,7 @@
 use axum::routing::{get, post, Router};
 use cars::{
 	cars::{accept_book, get_cars, multi_upload, Car},
-	taxi::{get_unverified_document, get_unverified_documents, get_unverified_taxis, verify_document},
+	taxi::{accept_ride_request, decline_ride_request, get_unverified_document, get_unverified_documents, get_unverified_taxis, verify_document},
 };
 use fcm_t::{fcm::req_ride, token::update_token};
 use file_server::file_handler;
@@ -42,16 +42,16 @@ async fn main() {
 		.route("/v1/car/review", post(get_review))
 		.route("/v1/car/create_review", post(post(create_review)))
 		.route("/v1/user/admin_req", post(change_category))
-		.route("/v1/req_ride", post(req_ride))
+		.route("/v1/ride/request", post(req_ride))
 		.route("/v1/book_car", post(fcm_t::fcm::book_car))
 		.route("/v1/token_update/:user_id/:token", get(update_token))
-		.route("/v1/driver_response", post(fcm_t::token::driver_response))
+		.route("/v1/ride/accept", post(accept_ride_request))
+		.route("/v1/ride/decline", post(decline_ride_request))
 		.route("/v1/search", post(search))
 		.route("/v1/delete_user", post(users::delete_user))
 		.route("/v1/delete_car", post(cars::cars::delete_car))
 		.route("/v1/init_taxi", post(cars::taxi::init_taxi))
 		.route("/v1/taxi_details", post(cars::taxi::taxi_details))
-		.route("/v1/ride_req_status", post(fcm_t::fcm::ride_request_status))
 		.route("/v1/book_req_status", post(fcm_t::fcm::book_request_status))
 		// taxi verification
 		.route("/v1/taxis/unverified", get(get_unverified_taxis))

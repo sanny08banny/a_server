@@ -6,9 +6,11 @@ use base64::Engine;
 use hyper::StatusCode;
 use postgres::types::*;
 use postgres_from_row::FromRow;
+use serde_json::{json, Value};
 use tokio::fs::File;
 use tokio_util::io::ReaderStream;
 
+use crate::fcm_t::fcm::{send_notification, start_ride_request, RideDetails};
 use crate::{db_client::DbClient, encryption_engine};
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
@@ -74,6 +76,7 @@ pub struct Taxi {
 	pub category: TaxiCategory,
 }
 
+
 pub async fn init_taxi(db: State<DbClient>, taxi: Json<Taxi>) -> impl IntoResponse {
 	let taxi = taxi.0;
 	let taxi_id = encryption_engine::CUSTOM_ENGINE.encode(format!("{}{}{}{}", taxi.driver_id, taxi.plate_number, taxi.model, taxi.color));
@@ -95,6 +98,37 @@ pub async fn init_taxi(db: State<DbClient>, taxi: Json<Taxi>) -> impl IntoRespon
 	};
 
 	(StatusCode::OK, taxi_id)
+}
+
+pub async fn accept_ride_request(db: State<DbClient>, res: Json<Value>) -> StatusCode {
+	let res = res.0;
+	let client_id = res["client_id"].as_str().unwrap();
+	let driver_id = res["driver_id"].as_str().unwrap();
+
+	let Ok(res) = db.query_one("SELECT notification_token,user_name FROM users WHERE user_id=$1", &[&client_id]).await else {
+		return StatusCode::INTERNAL_SERVER_ERROR;
+	};
+	let client_token: String = res.get("notification_token");
+
+	let Ok(res) = db.query_one("SELECT plate_number,color,model FROM taxi WHERE user_id='$1'", &[&driver_id]).await else {
+		return StatusCode::INTERNAL_SERVER_ERROR;
+	};
+
+	let details = json!({
+		"plate_number": res.get::<_,&str>("plate_number"),
+		"color":res.get::<_,&str>("color"),
+		"model":res.get::<_,&str>("model"),
+	});
+
+	send_notification(&client_token, details).await;
+	StatusCode::OK
+}
+
+
+pub async fn decline_ride_request(db: State<DbClient>,ride_details:Json<RideDetails>){
+let mut ride_details=ride_details.0;
+ride_details.iteration+=1;
+start_ride_request(db, ride_details).await
 }
 
 #[derive(serde::Deserialize)]
