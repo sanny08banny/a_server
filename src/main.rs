@@ -1,9 +1,9 @@
 use axum::routing::{get, post, Router};
 use cars::{
 	cars::{accept_book, get_cars, multi_upload, Car},
-	taxi::{accept_ride_request, decline_ride_request, get_unverified_document, get_unverified_documents, get_unverified_taxis, verify_document},
+	taxi::{accept_ride_request, decline_ride_request, get_unverified_document, get_unverified_documents, get_unverified_taxis, reqest_ride, verify_document},
 };
-use fcm_t::{fcm::req_ride, token::update_token};
+use fcm_t::token::update_token;
 use file_server::file_handler;
 use payment_gateway::mpesa_payment_gateway::{call_back_url, process_payment};
 use review::{create_review, get_review};
@@ -42,7 +42,7 @@ async fn main() {
 		.route("/v1/car/review", post(get_review))
 		.route("/v1/car/create_review", post(post(create_review)))
 		.route("/v1/user/admin_req", post(change_category))
-		.route("/v1/ride/request", post(req_ride))
+		.route("/v1/ride/request", post(reqest_ride))
 		.route("/v1/book_car", post(fcm_t::fcm::book_car))
 		.route("/v1/token_update/:user_id/:token", get(update_token))
 		.route("/v1/ride/accept", post(accept_ride_request))
