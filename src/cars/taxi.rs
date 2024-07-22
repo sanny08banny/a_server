@@ -113,7 +113,7 @@ pub async fn accept_ride_request(db: State<DbClient>, res: Json<Value>) -> Statu
 	let Ok(res) = db.query_one("SELECT plate_number,color,model FROM taxi WHERE user_id='$1'", &[&driver_id]).await else {
 		return StatusCode::INTERNAL_SERVER_ERROR;
 	};
-	let Ok(n) = db.query_one("SELECT user_name,phone_number FROM users WHERE user_id=$1", &[&driver_id]).await else {
+	let Ok(n) = db.query_one("SELECT user_name,user_phone FROM users WHERE user_id=$1", &[&driver_id]).await else {
 		return StatusCode::INTERNAL_SERVER_ERROR;
 	};
 	let details = json!({
