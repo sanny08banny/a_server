@@ -163,13 +163,13 @@ pub async fn multi_upload(db: State<DbClient>, mut multipart: Multipart) -> Stat
 				save_file(&file_path, "insurance.png", &field.bytes().await.unwrap());
 				print!("insurance");
 			}
-			"driving_licence" => {
-				save_file(&file_path, "driving_licence.png", &field.bytes().await.unwrap());
-				print!("driving_licence");
+			"driving_license" => {
+				save_file(&file_path, "driving_license.png", &field.bytes().await.unwrap());
+				print!("driving_license");
 			}
-			"psv_licence" => {
-				save_file(&file_path, "psv_licence.png", &field.bytes().await.unwrap());
-				print!("psv_licence");
+			"psv_license" => {
+				save_file(&file_path, "psv_license.png", &field.bytes().await.unwrap());
+				print!("psv_license");
 			}
 			"national_id_front" => {
 				save_file(&file_path, "national_id_front.png", &field.bytes().await.unwrap());

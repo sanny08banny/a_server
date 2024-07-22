@@ -314,8 +314,8 @@ pub async fn get_unverified_document(Path((driver_id, document_type)): Path<(Str
 	let path = match document_type.as_str() {
 		"NationalId" => "national_id_front.png",
 		"Insurance" => "insurance.png",
-		"DrivingLicense" => "driving_licence.png",
-		"PSVLicense" => "psv_licence.png",
+		"DrivingLicense" => "driving_license.png",
+		"PSVLicense" => "psv_license.png",
 		"InspectionReport" => "inspection_report.png",
 		_ => return (StatusCode::BAD_REQUEST, Body::empty()),
 	};
