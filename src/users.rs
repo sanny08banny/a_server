@@ -45,7 +45,8 @@ pub async fn create_user(db: State<DbClient>, user: Json<User>) -> StatusCode {
 	}
 }
 
-struct Logins{
+#[derive(serde::Deserialize, serde::Serialize, Debug)]
+pub struct Logins{
 	email:String,
 	password:String
 }
