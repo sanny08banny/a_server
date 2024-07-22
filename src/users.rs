@@ -32,7 +32,7 @@ pub async fn create_user(db: State<DbClient>, user: Json<User>) -> StatusCode {
 
 	let statement = "INSERT INTO users (user_id,email,user_phone,password,tokens,isadmin,isdriver,notification_token,user_name) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)";
 	let res = db
-		.execute(statement, &[&user_id, &user.email, &user.tel,&user.password, &600i64, &false, &false, &user.notification_id, &user.name])
+		.execute(statement, &[&user_id, &user.email, &user.tel,&user.password, &600f64, &false, &false, &user.notification_id, &user.name])
 		.await;
 	println!("{:?}",res);
 	match res {
