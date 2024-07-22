@@ -209,8 +209,7 @@ pub async fn start_ride_request(db: State<DbClient>,ride_details: RideDetails)->
 		"current_lon":ride_details.pricing_details.pick_up_longitude,
 		"price":ride_details.price
 	});
-	start_notification(&db.0, notification_details, UserType::Driver).await;
-	StatusCode::OK
+	start_notification(&db.0, notification_details, UserType::Driver).await
 }
 
 
