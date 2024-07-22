@@ -14,6 +14,7 @@ use tokio::fs::File;
 use tokio_util::io::ReaderStream;
 
 use crate::fcm_t::fcm::{send_notification, start_notification};
+use crate::users::UserType;
 use crate::{db_client::DbClient, encryption_engine};
 
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
@@ -208,7 +209,7 @@ pub async fn start_ride_request(db: State<DbClient>,ride_details: RideDetails)->
 		"current_lon":ride_details.pricing_details.pick_up_longitude,
 		"price":ride_details.price
 	});
-	start_notification(&db.0, notification_details, "Driver").await;
+	start_notification(&db.0, notification_details, UserType::Driver).await;
 	StatusCode::OK
 }
 

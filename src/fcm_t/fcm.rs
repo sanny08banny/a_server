@@ -1,18 +1,18 @@
-use crate::db_client::DbClient;
+use crate::{db_client::DbClient, users::UserType};
 use axum::{extract::State, Json};
 use fcm;
 use serde_json::{json, Value};
 
 
 pub async fn book_car(db: State<DbClient>, detail: Json<Value>) {
-	start_notification(&db.0, detail.0, "Owner").await;
+	start_notification(&db.0, detail.0, UserType::Owner).await;
 }
 
 pub async fn book_request_status(db: State<DbClient>, detail: Json<Value>) {
-	start_notification(&db.0, detail.0, "Normal").await;
+	start_notification(&db.0, detail.0, UserType::Rider).await;
 }
 
-pub async fn start_notification(db: &DbClient, det: Value, category: &str) {
+pub async fn start_notification(db: &DbClient, det: Value, category: UserType) {
 	let sender_id = det["sender_id"].as_str().unwrap();
 	let recipient = det["recipient_id"].as_str().unwrap();
 
@@ -20,37 +20,44 @@ pub async fn start_notification(db: &DbClient, det: Value, category: &str) {
 	let res = db.query("SELECT user_name,user_phone FROM users WHERE user_id=$1", &[&sender_id]).await.unwrap();
 	let user_name: String = res[0].get("user_name");
 
-	let details = if category == "Driver" {
-		json!(
-		{
-			"ride_id": sender_id.to_owned()+"_"+recipient,
-			"user_name": user_name,
-			"user_phone": det["phone_number"].as_str().unwrap(),
-			"dest_lat": det["dest_lat"].as_f64().unwrap(),
-			"dest_lon": det["dest_lon"].as_f64().unwrap(),
-			"current_lat": det["current_lat"].as_f64().unwrap(),
-			"current_lon": det["current_lon"].as_f64().unwrap(),
-			"price":det["price"].as_f64().unwrap(),
-			"sender_id": sender_id,
-		})
-	} else if category == "Owner" {
-		json!(
-		{
-			"booking_id": sender_id.to_owned()+"_"+recipient,
-			"user_name": user_name,
-			// "user_phone": user_phone,
-			"car_id": det["car_id"].as_str().unwrap(),
-			"sender_id": sender_id,
-		})
-	} else if category == "Normal" && det["status"].as_str().unwrap() == "accepted" {
-		json!({
-			"status":"accepted"
-		})
-	} else {
-		json!({
-			"status":"rejected"
-		})
-	};
+	let details = match category {
+		UserType::Driver => {
+			json!(
+				{
+					"ride_id": sender_id.to_owned()+"_"+recipient,
+					"user_name": user_name,
+					"user_phone": det["phone_number"].as_str().unwrap(),
+					"dest_lat": det["dest_lat"].as_f64().unwrap(),
+					"dest_lon": det["dest_lon"].as_f64().unwrap(),
+					"current_lat": det["current_lat"].as_f64().unwrap(),
+					"current_lon": det["current_lon"].as_f64().unwrap(),
+					"price":det["price"].as_f64().unwrap(),
+					"sender_id": sender_id,
+				})
+		},
+		UserType::Owner => {
+			json!(
+				{
+					"booking_id": sender_id.to_owned()+"_"+recipient,
+					"user_name": user_name,
+					// "user_phone": user_phone,
+					"car_id": det["car_id"].as_str().unwrap(),
+					"sender_id": sender_id,
+				})
+		},
+		UserType::Rider => {
+			if det["status"].as_str().unwrap() == "accepted" {
+				json!({
+					"status":"accepted"
+				})
+			} else {
+				json!({
+					"status":"rejected"
+				})
+			}
+		},
+		UserType::Admin => todo!(),
+	}; 
 
 	let res = db.query("SELECT notification_token FROM users WHERE user_id=$1", &[&recipient]).await.unwrap();
 	let token: String = res[0].get("notification_token");
