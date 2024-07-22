@@ -162,16 +162,10 @@ price.round().to_string()
 
 pub async fn reqest_ride(db: State<DbClient>,ride_details: Json<RideDetails>)->StatusCode {
 	let ride_details=ride_details.0;
-	let status=start_ride_request(db, ride_details).await;
-	if status==0{
-		StatusCode::OK
-	}
-	else{
-		StatusCode::NOT_FOUND
-	}
+	start_ride_request(db, ride_details).await
 }
 
-pub async fn start_ride_request(db: State<DbClient>,ride_details: RideDetails)->i32{
+pub async fn start_ride_request(db: State<DbClient>,ride_details: RideDetails)->StatusCode{
 	let client_lat = ride_details.pricing_details.pick_up_latitude;
 	let client_log = ride_details.pricing_details.pick_up_longitude;
 	let mut closest_driver=String::new();
@@ -202,7 +196,7 @@ pub async fn start_ride_request(db: State<DbClient>,ride_details: RideDetails)->
 		i+=1;
 	}
 	if min_distance>1800.00{
-		return 1;
+		return StatusCode::NOT_FOUND;
 	}
 	let notification_details=json!({
 		"sender_id":ride_details.pricing_details.rider_id,
@@ -215,7 +209,7 @@ pub async fn start_ride_request(db: State<DbClient>,ride_details: RideDetails)->
 		"price":ride_details.price
 	});
 	start_notification(&db.0, notification_details, "Driver").await;
-	return 0;
+	StatusCode::OK
 }
 
 
