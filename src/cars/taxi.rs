@@ -160,12 +160,18 @@ match ride_details.taxi_category {
 price.round().to_string()
 }
 
-pub async fn reqest_ride(db: State<DbClient>,ride_details: Json<RideDetails>) {
+pub async fn reqest_ride(db: State<DbClient>,ride_details: Json<RideDetails>)->StatusCode {
 	let ride_details=ride_details.0;
-	start_ride_request(db, ride_details).await
+	let status=start_ride_request(db, ride_details).await;
+	if status==0{
+		StatusCode::OK
+	}
+	else{
+		StatusCode::NOT_FOUND
+	}
 }
 
-pub async fn start_ride_request(db: State<DbClient>,ride_details: RideDetails){
+pub async fn start_ride_request(db: State<DbClient>,ride_details: RideDetails)->i32{
 	let client_lat = ride_details.pricing_details.pick_up_latitude;
 	let client_log = ride_details.pricing_details.pick_up_longitude;
 	let mut closest_driver=String::new();
@@ -195,6 +201,9 @@ pub async fn start_ride_request(db: State<DbClient>,ride_details: RideDetails){
 		}
 		i+=1;
 	}
+	if min_distance>1800.00{
+		return 1;
+	}
 	let notification_details=json!({
 		"sender_id":ride_details.pricing_details.rider_id,
 		"recipient_id":closest_driver,
@@ -206,6 +215,7 @@ pub async fn start_ride_request(db: State<DbClient>,ride_details: RideDetails){
 		"price":ride_details.price
 	});
 	start_notification(&db.0, notification_details, "Driver").await;
+	return 0;
 }
 
 
@@ -242,7 +252,7 @@ pub async fn accept_ride_request(db: State<DbClient>, res: Json<Value>) -> Statu
 pub async fn decline_ride_request(db: State<DbClient>,ride_details:Json<RideDetails>){
 let mut ride_details=ride_details.0;
 ride_details.iteration+=1;
-start_ride_request(db, ride_details).await
+start_ride_request(db, ride_details).await;
 }
 
 #[derive(serde::Deserialize)]
