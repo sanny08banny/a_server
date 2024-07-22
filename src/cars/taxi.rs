@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::thread;
 
 use axum::body::Body;
 use axum::extract::Path;
@@ -168,6 +169,7 @@ pub async fn reqest_ride(db: State<DbClient>,ride_details: Json<RideDetails>)->S
 }
 
 pub async fn start_ride_request(db: State<DbClient>,ride_details: RideDetails)->StatusCode{
+	println!("not awaiting");
 	let client_lat = ride_details.pricing_details.pick_up_latitude;
 	let client_log = ride_details.pricing_details.pick_up_longitude;
 	let mut closest_driver=String::new();
@@ -247,7 +249,7 @@ pub async fn accept_ride_request(db: State<DbClient>, res: Json<Value>) -> Statu
 pub async fn decline_ride_request(db: State<DbClient>,ride_details:Json<RideDetails>){
 let mut ride_details=ride_details.0;
 ride_details.iteration+=1;
-start_ride_request(db, ride_details).await;
+	start_ride_request(db, ride_details);
 }
 
 #[derive(serde::Deserialize)]
