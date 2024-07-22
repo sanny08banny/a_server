@@ -115,13 +115,18 @@ seats:i32,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
-pub struct RideDetails{
+pub struct PricingDetails{
 rider_id:String,
 pick_up_latitude:f64,
 pick_up_longitude:f64,
 dest_latitude:f64,
-dest_longitude:i32,
+dest_longitude:f64,
 taxi_category:TaxiCategory,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
+pub struct RideDetails{
+pricing_details:PricingDetails,
 price:f64,
 declined:Vec<String>,
 pub iteration:i32,
@@ -144,7 +149,7 @@ pub fn great_circle_distance(a: (f64, f64), b: (f64, f64)) -> f64 {
 	central_angle * EARTH_RADIUS
 }
 
-pub async fn taxi_price(ride_details: Json<RideDetails>)->String{
+pub async fn taxi_price(ride_details: Json<PricingDetails>)->String{
 let distance=great_circle_distance((ride_details.pick_up_latitude,ride_details.pick_up_longitude), (ride_details.dest_latitude,ride_details.pick_up_longitude))/1000.00;
 let price:f64;
 match ride_details.taxi_category {
@@ -161,12 +166,12 @@ pub async fn reqest_ride(db: State<DbClient>,ride_details: Json<RideDetails>) {
 }
 
 pub async fn start_ride_request(db: State<DbClient>,ride_details: RideDetails){
-	let client_lat = ride_details.pick_up_latitude;
-	let client_log = ride_details.pick_up_longitude;
+	let client_lat = ride_details.pricing_details.pick_up_latitude;
+	let client_log = ride_details.pricing_details.pick_up_longitude;
 	let mut closest_driver=String::new();
 	let mut min_distance=0.00;
 	let mut i=0;
-    let firebase=Firebase::new("https://iris-59542-default-rtdb.firebaseio.com/").unwrap().at("taxis").at("available").at(ride_details.taxi_category.as_str());
+    let firebase=Firebase::new("https://iris-59542-default-rtdb.firebaseio.com/").unwrap().at("taxis").at("available").at(ride_details.pricing_details.taxi_category.as_str());
     let base:HashMap<String,TaxiLocation>=firebase.get::<>().await.unwrap();
 	for (_x,y) in base {
 		for driver in &ride_details.declined {
@@ -191,13 +196,13 @@ pub async fn start_ride_request(db: State<DbClient>,ride_details: RideDetails){
 		i+=1;
 	}
 	let notification_details=json!({
-		"sender_id":ride_details.rider_id,
+		"sender_id":ride_details.pricing_details.rider_id,
 		"recipient_id":closest_driver,
-		"dest_lat":ride_details.dest_latitude,
-		"dest_lon":ride_details.dest_longitude,
+		"dest_lat":ride_details.pricing_details.dest_latitude,
+		"dest_lon":ride_details.pricing_details.dest_longitude,
 		"phone_number":ride_details.phone_number,
-		"current_lat":ride_details.pick_up_latitude,
-		"current_lon":ride_details.pick_up_longitude,
+		"current_lat":ride_details.pricing_details.pick_up_latitude,
+		"current_lon":ride_details.pricing_details.pick_up_longitude,
 		"price":ride_details.price
 	});
 	start_notification(&db.0, notification_details, "Driver").await;
