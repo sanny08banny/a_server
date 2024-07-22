@@ -128,6 +128,7 @@ taxi_category:TaxiCategory,
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
 pub struct RideDetails{
 pricing_details:PricingDetails,
+dest_name:String,
 price:f64,
 declined:Vec<String>,
 pub iteration:i32,
@@ -204,6 +205,7 @@ pub async fn start_ride_request(db: State<DbClient>,ride_details: RideDetails)->
 		"recipient_id":closest_driver,
 		"dest_lat":ride_details.pricing_details.dest_latitude,
 		"dest_lon":ride_details.pricing_details.dest_longitude,
+		"dest_name":ride_details.dest_name,
 		"phone_number":ride_details.phone_number,
 		"current_lat":ride_details.pricing_details.pick_up_latitude,
 		"current_lon":ride_details.pricing_details.pick_up_longitude,
