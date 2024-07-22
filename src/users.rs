@@ -45,26 +45,22 @@ pub async fn create_user(db: State<DbClient>, user: Json<User>) -> StatusCode {
 	}
 }
 
-pub async fn user_login(db: State<DbClient>, user: Json<User>) -> Result<Json<Value>, StatusCode> {
-	let user = user.0;
-	let email = user.email;
-	let password = user.password;
-	let q = format!("SELECT * FROM users WHERE email='{}' AND password='{}'", email, password);
-	let rows = db.query(q.as_str(), &[]).await.unwrap();
-	let mut x = String::new();
-	let mut is_admin = false;
-	let mut is_driver = false;
-	for row in rows {
-		let id: i32 = row.get(0);
-		is_admin = row.get("isadmin");
-		is_driver = row.get("isdriver");
-		x = id.to_string();
-	}
-	if x.is_empty() {
+struct Logins{
+	email:String,
+	password:String
+}
+
+pub async fn user_login(db: State<DbClient>, logins: Json<Logins>) -> Result<Json<Value>, StatusCode> {
+	let logins = logins.0;
+	let email = logins.email;
+	let password = logins.password;
+	let Some(row) = db.query_opt("SELECT user_id,isadmin,isdriver FROM users WHERE email=$1 AND password=$2", &[&email,&password]).await.unwrap() else{
 		return Err(StatusCode::UNAUTHORIZED);
-	}
-	let x = json!({"user_id":x,"is_admin":is_admin,"is_driver":is_driver});
-	Ok(Json(x))
+	};
+	let  user_id:&str =row.get(0) ;
+	let  is_admin:&str =row.get(1);
+	let  is_driver:&str = row.get(2);
+	Ok(Json(json!({"user_id":user_id,"is_admin":is_admin,"is_driver":is_driver})))
 }
 
 pub async fn change_category(db: State<DbClient>, j: Json<Value>) -> Json<Value> {
