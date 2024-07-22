@@ -235,7 +235,6 @@ pub async fn accept_ride_request(db: State<DbClient>, res: Json<Value>) -> Statu
 		"plate_number": res.get::<_,&str>("plate_number"),
 		"color":res.get::<_,&str>("color"),
 		"model":res.get::<_,&str>("model"),
-		
 	});
 
 	send_notification(&client_token, details).await;
