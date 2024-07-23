@@ -169,7 +169,6 @@ pub async fn reqest_ride(db: State<DbClient>,ride_details: Json<RideDetails>)->S
 }
 
 pub async fn start_ride_request(db: State<DbClient>,ride_details: RideDetails)->StatusCode{
-	println!("not awaiting");
 	let client_lat = ride_details.pricing_details.pick_up_latitude;
 	let client_log = ride_details.pricing_details.pick_up_longitude;
 	let mut closest_driver=String::new();
