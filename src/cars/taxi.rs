@@ -249,7 +249,9 @@ pub async fn accept_ride_request(db: State<DbClient>, res: Json<Value>) -> Statu
 pub async fn decline_ride_request(db: State<DbClient>,ride_details:Json<RideDetails>){
 let mut ride_details=ride_details.0;
 ride_details.iteration+=1;
-	start_ride_request(db, ride_details);
+thread::spawn(move||{
+	start_ride_request(db, ride_details)}
+);
 }
 
 #[derive(serde::Deserialize)]
