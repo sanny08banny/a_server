@@ -20,16 +20,18 @@ use crate::{db_client::DbClient, encryption_engine};
 #[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub enum TaxiCategory {
 	Economy,
-	X,
+	Classic,
 	Xl,
+	BodaBoda
 }
 
 impl TaxiCategory {
 	pub fn as_str(&self) -> &'static str {
 		match self {
 			TaxiCategory::Economy => "Economy",
-			TaxiCategory::X => "X",
+			TaxiCategory::Classic => "Classic",
 			TaxiCategory::Xl => "Xl",
+			TaxiCategory::BodaBoda=>"BodaBoda"
 		}
 	}
 }
@@ -60,7 +62,8 @@ impl<'a> FromSql<'a> for TaxiCategory {
 		match data {
 			"Economy" => Ok(TaxiCategory::Economy),
 			"Xl" => Ok(TaxiCategory::Xl),
-			"X" => Ok(TaxiCategory::X),
+			"Classic" => Ok(TaxiCategory::Classic),
+			"BodaBoda"=>Ok(TaxiCategory::BodaBoda),
 			unknown => Err(format!("Unknown Taxi category: {}", unknown).into()),
 		}
 	}
@@ -156,8 +159,9 @@ let distance=great_circle_distance((ride_details.pick_up_latitude,ride_details.p
 let price:f64;
 match ride_details.taxi_category {
 	TaxiCategory::Economy => price=distance*50.00+120.00,
-	TaxiCategory::X => price=distance*55.00+150.00,
-	TaxiCategory::Xl => price=distance*65.00+200.00
+	TaxiCategory::Classic => price=distance*55.00+150.00,
+	TaxiCategory::Xl => price=distance*65.00+200.00,
+	TaxiCategory::BodaBoda=>price=distance*50.00+50.00,
 }
 price.round().to_string()
 }
