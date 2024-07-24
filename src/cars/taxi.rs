@@ -87,9 +87,6 @@ pub struct Taxi {
 pub async fn init_taxi(db: State<DbClient>, taxi: Json<Taxi>) -> impl IntoResponse {
 	let taxi = taxi.0;
 	let taxi_id = encryption_engine::CUSTOM_ENGINE.encode(format!("{}{}{}{}", taxi.driver_id, taxi.plate_number, taxi.model, taxi.color));
-	if taxi.driver_id.is_empty(){
-		return (StatusCode::INTERNAL_SERVER_ERROR,"Driver can't be empty".to_string());
-	}
 	let statement = "INSERT INTO taxi (taxi_id,driver_id,model,color,plate_number,category,manufacturer,verified) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)";
 	if let Err(err) = db
 		.execute(
