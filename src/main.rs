@@ -52,7 +52,7 @@ async fn main() {
 		.route("/v1/delete_car", post(cars::cars::delete_car))
 		.route("/v1/taxi/init", post(cars::taxi::init_taxi))
 		// .route("/v1/taxi/details", post(cars::taxi::taxi_details))
-		.route("/v1/taxi/images/:taxi_id", post(cars::taxi::taxi_images))
+		.route("/v1/taxi/images/:taxi_id", get(cars::taxi::taxi_images))
 		.route("/v1/book_req_status", post(fcm_t::fcm::book_request_status))
 		.route("/v1/taxi/price",post(taxi_price))
 		// taxi verification
