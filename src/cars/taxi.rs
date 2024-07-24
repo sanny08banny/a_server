@@ -281,7 +281,8 @@ pub async fn get_unverified_taxis(db: State<DbClient>) -> Json<Vec<UnverifiedDri
 	let rows = db.query("SELECT driver_id FROM taxi WHERE verified=$1", &[&false]).await.unwrap();
 	let mut drivers = Vec::with_capacity(rows.len());
 	for row in rows {
-		let driver_id: String = row.get("driver_id");
+		let driver_id: String = row.get(0);
+		println!("{}",driver_id);
 		let name = db.query_one("SELECT user_name FROM users WHERE user_id='$1'", &[&driver_id]).await;
 		println!("{:?}",name);
 		// .unwrap().get(0);
