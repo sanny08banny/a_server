@@ -280,7 +280,7 @@ pub struct UnverifiedDriver {
 pub async fn get_unverified_taxis(db: State<DbClient>) -> Json<Vec<UnverifiedDriver>> {
 	let rows = db.query("SELECT driver_id FROM taxi WHERE verified=$1", &[&false]).await.unwrap();
 	let mut drivers = Vec::with_capacity(rows.len());
-
+	println!("{:?}",rows);
 	for row in rows {
 		let driver_id: String = row.get("driver_id");
 		let name: String = db.query_one("SELECT user_name FROM users WHERE user_id=$1", &[&driver_id]).await.unwrap().get("user_name");
