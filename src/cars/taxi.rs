@@ -87,7 +87,9 @@ pub struct Taxi {
 pub async fn init_taxi(db: State<DbClient>, taxi: Json<Taxi>) -> impl IntoResponse {
 	let taxi = taxi.0;
 	let taxi_id = encryption_engine::CUSTOM_ENGINE.encode(format!("{}{}{}{}", taxi.driver_id, taxi.plate_number, taxi.model, taxi.color));
-
+	if taxi.driver_id.is_empty(){
+		return (StatusCode::INTERNAL_SERVER_ERROR,"Driver can't be empty".to_string());
+	}
 	let statement = "INSERT INTO taxi (taxi_id,driver_id,model,color,plate_number,category,manufacturer,verified) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)";
 	if let Err(err) = db
 		.execute(
@@ -280,15 +282,10 @@ pub struct UnverifiedDriver {
 pub async fn get_unverified_taxis(db: State<DbClient>) -> Json<Vec<UnverifiedDriver>> {
 	let rows = db.query("SELECT driver_id FROM taxi WHERE verified=$1", &[&false]).await.unwrap();
 	let mut drivers = Vec::with_capacity(rows.len());
-	println!("{:?}",rows.len());
 	for row in rows {
 		let driver_id: String = row.get(0);
-		println!("{}",driver_id);
-		// let name = db.query_one("SELECT user_name FROM users WHERE user_id='$1'", &[&driver_id]).await;
-		// println!("{:?}",name);
-		// .unwrap().get(0);
-
-		// drivers.push(UnverifiedDriver { name, driver_id })
+		let name:String = db.query_one("SELECT user_name FROM users WHERE user_id='$1'", &[&driver_id]).await.unwrap().get(0);
+		drivers.push(UnverifiedDriver { name, driver_id })
 	}
 
 	Json(drivers)
