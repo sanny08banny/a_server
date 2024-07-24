@@ -88,9 +88,7 @@ pub async fn init_taxi(db: State<DbClient>, taxi: Json<Taxi>) -> impl IntoRespon
 	let taxi = taxi.0;
 	let taxi_id = encryption_engine::CUSTOM_ENGINE.encode(format!("{}{}{}{}", taxi.driver_id, taxi.plate_number, taxi.model, taxi.color));
 	// debug
-	if db.query_one("SELECT taxi_id WHERE driver_id=$1", &[&taxi.driver_id]).await.is_ok(){
-		let _=db.execute("DELETE FROM taxi WHERE driver_id=$1", &[&taxi.driver_id]).await;
-	}
+	let _=db.execute("DELETE FROM taxi WHERE driver_id=$1", &[&taxi.driver_id]).await;
 	let statement = "INSERT INTO taxi (taxi_id,driver_id,model,color,plate_number,category,manufacturer,verified) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)";
 	if let Err(err) = db
 		.execute(
