@@ -262,13 +262,9 @@ ride_details.iteration+=1;
 	start_ride_request(db, ride_details).await;
 }
 
-#[derive(serde::Deserialize)]
-pub struct TaxiDetailsReq {
-	taxi_id: String,
-}
 
-pub async fn taxi_details(db: State<DbClient>, det: Json<TaxiDetailsReq>) -> impl IntoResponse {
-	match db.query_opt("SELECT * FROM taxi WHERE taxi_id=$1", &[&det.taxi_id]).await {
+pub async fn taxi_images(db: State<DbClient>, det: Path<String>) -> impl IntoResponse {
+	match db.query_opt("SELECT image_paths FROM taxi WHERE taxi_id=$1", &[&det.0]).await {
 		Ok(taxi) => (StatusCode::OK, Json(taxi.map(|t| Taxi::from_row(&t)))),
 		Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(None)),
 	}
