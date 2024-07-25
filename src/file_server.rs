@@ -4,8 +4,8 @@ use tokio::fs::File;
 use tokio_util::io::ReaderStream;
 
 // parent_folder images or docs
-pub async fn file_handler(extract: Path<(String, String)>) -> impl IntoResponse {
-	let Path((driver_id, file)) = extract;
+pub async fn file_handler(extract: Path<(String,String, String)>) -> impl IntoResponse {
+	let Path((_category,driver_id, file)) = extract;
 	let path = format!("images/taxi/{}/{}", driver_id, file);
 
 	match read_file_stream(&path).await {
