@@ -31,7 +31,7 @@ async fn main() {
  
 	let app = Router::new()
 		.route("/v1/cars", get(get_cars))
-		.route("/v1/taxi/image/:category/:driver_id/:file_name", get(file_handler))
+		.route("/v1/taxi/image/:driver_id/:file_name", get(file_handler))
 		.route("/v1/book/accept", post(accept_book))
 		.route("/v1/process_payment", post(process_payment))
 		.route("/v1/car/multi_upload", post(multi_upload))
