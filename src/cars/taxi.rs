@@ -185,7 +185,9 @@ pub async fn start_ride_request(db: State<DbClient>,ride_details: RideDetails)->
 	let mut i=0;
 	let mut skip=false;
     let firebase=Firebase::new("https://naturaw-64116-default-rtdb.firebaseio.com/").unwrap().at("taxis").at("available").at(ride_details.pricing_details.taxi_category.as_str());
-    let base:HashMap<String,TaxiLocation>=firebase.get::<>().await.unwrap();
+    let Ok(base)=firebase.get::<HashMap<String,TaxiLocation>>().await else{
+		return StatusCode::NOT_FOUND;
+	};
 	for (_x,y) in base {
 		for driver in &ride_details.declined {
 			if driver==&y.driver_id{
