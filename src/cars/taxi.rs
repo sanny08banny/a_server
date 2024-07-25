@@ -90,7 +90,8 @@ pub async fn init_taxi(db: State<DbClient>, taxi: Json<Taxi>) -> impl IntoRespon
 	// debug
 	let _=db.execute("DELETE FROM taxi WHERE driver_id=$1", &[&taxi.driver_id]).await;
 	let _=db.execute("DELETE FROM taxi_verifications WHERE driver_id=$1", &[&taxi.driver_id]).await;
-
+	match db.query_one("SELECT user_id FROM users WHERE user_id=$1", &[&taxi.driver_id]).await {
+    Ok(_)=>{
 	let statement = "INSERT INTO taxi (taxi_id,driver_id,model,color,plate_number,category,manufacturer,verified) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)";
 	if let Err(err) = db
 		.execute(
@@ -109,7 +110,9 @@ pub async fn init_taxi(db: State<DbClient>, taxi: Json<Taxi>) -> impl IntoRespon
 	match db.execute("UPDATE users SET isdriver=true WHERE user_id=$1", &[&taxi.driver_id]).await {
 		Ok(_) => (StatusCode::OK, taxi_id),
 		Err(e) => (StatusCode::INTERNAL_SERVER_ERROR,e.to_string()),
-	}
+	}},
+	Err(_)=>(StatusCode::NOT_FOUND,"User account not found".to_string())
+}
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
