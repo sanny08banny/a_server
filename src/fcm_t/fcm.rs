@@ -61,14 +61,14 @@ pub async fn start_notification(db: &DbClient, det: Value, category: UserType) -
 		UserType::Admin => todo!(),
 	}; 
 
-	let res = db.query("SELECT notification_token FROM users WHERE user_id=$1", &[&recipient]).await.unwrap();
-	if res.len()>0{
-		let token: String = res[0].get("notification_token");
-		println!("recipient notification token: {:?}", token);
-		send_notification(token.as_str(), details).await;
-		return StatusCode::OK
-	}
-	StatusCode::NOT_FOUND
+	let res = db.query_one("SELECT notification_token FROM users WHERE user_id=$1", &[&recipient]).await.unwrap();
+	let Ok(token) = res.try_get::<_,&str>("notification_token") else{
+		println!("notification token not found");
+		return StatusCode::NOT_FOUND;
+	};
+	println!("recipient notification token: {:?}", token);
+	send_notification(token, details).await;
+	return StatusCode::OK;
 }
 
 pub async fn send_notification(token: &str, mut details: Value) {

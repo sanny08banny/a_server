@@ -60,8 +60,6 @@ async fn main() {
 		.route("/v1/:driver_id/document/unverified", get(get_unverified_documents))
 		.route("/v1/:driver_id/document/unverified/:type", get(get_unverified_document))
 		.route("/v1/:driver_id/document/verify/:type", get(verify_document))
-		// rides
-		// history
 		.with_state(db)
 		.layer(CorsLayer::permissive());
 
