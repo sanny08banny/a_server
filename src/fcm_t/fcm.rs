@@ -60,8 +60,10 @@ pub async fn start_notification(db: &DbClient, det: Value, category: UserType) -
 		},
 		UserType::Admin => todo!(),
 	}; 
-
-	let res = db.query_one("SELECT notification_token FROM users WHERE user_id=$1", &[&recipient]).await.unwrap();
+	println!("recipient= {}",recipient);
+	let Ok(res) = db.query_one("SELECT notification_token FROM users WHERE user_id=$1", &[&recipient]).await else{
+		return StatusCode::INTERNAL_SERVER_ERROR;
+	};
 	let Ok(token) = res.try_get::<_,&str>("notification_token") else{
 		println!("notification token not found");
 		return StatusCode::NOT_FOUND;
