@@ -203,6 +203,7 @@ pub async fn start_ride_request(db: State<DbClient>,ride_details: RideDetails)->
 		let distance=great_circle_distance((client_lat,client_log), (driver_lat,driver_lon))*1000.00;
 		if i==0{
 			min_distance=distance;
+			closest_driver=y.driver_id;
 		}else if distance<min_distance{
 			min_distance=distance;
 			closest_driver=y.driver_id;
