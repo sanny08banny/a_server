@@ -214,9 +214,10 @@ pub async fn start_ride_request(db: State<DbClient>,ride_details: RideDetails)->
 		}
 		i+=1;
 	}
-	if min_distance>1800.00{
-		return StatusCode::NOT_FOUND;
-	}
+	println!("min_disatance= {}",min_distance);
+	// if min_distance>1800.00{
+	// 	return StatusCode::NOT_FOUND;
+	// }
 	let notification_details=json!({
 		"sender_id":ride_details.pricing_details.rider_id,
 		"recipient_id":closest_driver,
