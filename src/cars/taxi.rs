@@ -236,8 +236,12 @@ pub async fn start_ride_request(db: State<DbClient>,ride_details: RideDetails)->
 
 pub async fn accept_ride_request(db: State<DbClient>, res: Json<Value>) -> StatusCode {
 	let res = res.0;
-	let client_id = res["client_id"].as_str().unwrap();
-	let driver_id = res["driver_id"].as_str().unwrap();
+	let Some(client_id) = res["client_id"].as_str() else{
+		return StatusCode::NO_CONTENT;
+	};
+	let Some(driver_id) = res["driver_id"].as_str() else{
+	    return  StatusCode::NO_CONTENT;
+	};
 
 	let Ok(res) = db.query_one("SELECT notification_token,user_name FROM users WHERE user_id=$1", &[&client_id]).await else {
 		return StatusCode::INTERNAL_SERVER_ERROR;
