@@ -41,7 +41,7 @@ async fn main() {
 		.route("/v1/user/login", post(user_login))
 		.route("/v1/car/review", post(get_review))
 		.route("/v1/car/create_review", post(post(create_review)))
-		.route("/v1/user/admin_req", post(change_category))
+		// .route("/v1/user/admin_req", post(change_category))
 		.route("/v1/taxi/request", post(reqest_ride))
 		.route("/v1/book_car", post(fcm_t::fcm::book_car))
 		.route("/v1/token_update/:user_id/:token", get(update_token))
