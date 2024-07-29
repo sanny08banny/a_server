@@ -98,6 +98,7 @@ pub async fn multi_upload(db: State<DbClient>, mut multipart: Multipart) -> Stat
 	let mut file_path = String::new();
 	let mut index = 0;
 	let mut category = String::new();
+    let mut columns: Vec<&str>=Vec::with_capacity(5);
 
 	while let Some(field) = multipart.next_field().await.unwrap() {
 		let name = field.name().unwrap().to_string();
@@ -151,7 +152,7 @@ pub async fn multi_upload(db: State<DbClient>, mut multipart: Multipart) -> Stat
 			}
 			"inspection_report" => {
 				save_file(&file_path, "inspection_report.png", &field.bytes().await.unwrap());
-				print!("inspection_report");
+				columns.push("inspection_report");
 			}
 			"insurance_payment_plan" => {
 				print!("insurance_payment_plan, {:?}", field.text().await.unwrap());
@@ -161,27 +162,25 @@ pub async fn multi_upload(db: State<DbClient>, mut multipart: Multipart) -> Stat
 			}
 			"insurance" => {
 				save_file(&file_path, "insurance.png", &field.bytes().await.unwrap());
-				print!("insurance");
+				columns.push("insurance");
 			}
 			"driving_license_front" => {
 				save_file(&file_path, "driving_license_front.png", &field.bytes().await.unwrap());
-				print!("driving_license");
 			}
 			"driving_license_back" => {
 				save_file(&file_path, "driving_license_back.png", &field.bytes().await.unwrap());
-				print!("driving_license");
+				columns.push("driving_license");
 			}
 			"psv_license" => {
 				save_file(&file_path, "psv_license.png", &field.bytes().await.unwrap());
-				print!("psv_license");
+				columns.push("psv_license");
 			}
 			"national_id_front" => {
 				save_file(&file_path, "national_id_front.png", &field.bytes().await.unwrap());
-				print!("national_id_front");
 			}
 			"national_id_back" => {
 				save_file(&file_path, "national_id_back.png", &field.bytes().await.unwrap());
-				print!("national_id_back");
+				columns.push("national_id");
 			}
 			_ => {
 				let img_name = format!("img_{}.{}", index, "png");
@@ -224,9 +223,18 @@ pub async fn multi_upload(db: State<DbClient>, mut multipart: Multipart) -> Stat
 			);
 			db.execute(q.as_str(), &[]).await.unwrap();
 		}
-	} else if category == "taxi" && c > 0 {
+	} else if category == "taxi" {
+		if c>0{
 		let q = format!("UPDATE taxi SET image_paths={} WHERE taxi_id='{}'", images, car_id);
 		db.execute(q.as_str(), &[]).await.unwrap();
+	}
+	for column in columns{
+		let query = format!("UPDATE taxi_verifications SET {}=$1 WHERE driver_id=$2", column);
+		match db.0.execute(&query, &[&"Pending",&user_id]).await {
+			Ok(_) => return StatusCode::OK,
+			_ => return StatusCode::INTERNAL_SERVER_ERROR,
+		}
+		}
 	}
 	StatusCode::OK
 }

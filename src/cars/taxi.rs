@@ -25,6 +25,23 @@ pub enum TaxiCategory {
 	BodaBoda
 }
 
+#[derive(serde::Deserialize, serde::Serialize)]
+pub enum DocumentVerificationStatus{
+	Unverified,
+	Verified,
+	Pending,
+}
+
+impl DocumentVerificationStatus {
+	pub fn as_str(&self) -> &'static str {
+		match self {
+			DocumentVerificationStatus::Unverified => "Unverified",
+			DocumentVerificationStatus::Verified => "Verified",
+			DocumentVerificationStatus::Pending => "Pending",
+		}
+	}
+}
+
 impl TaxiCategory {
 	pub fn as_str(&self) -> &'static str {
 		match self {
@@ -112,7 +129,8 @@ pub async fn init_taxi(db: State<DbClient>, taxi: Json<Taxi>) -> impl IntoRespon
 	};
 
 	let statement = "INSERT INTO taxi_verifications (driver_id, inspection_report, insurance, driving_license, psv_license, national_id) VALUES ($1,$2,$3,$4,$5,$6)";
-	if let Err(err) = db.execute(statement, &[&taxi.driver_id, &false, &false, &false, &false, &false]).await {
+	let status=DocumentVerificationStatus::Unverified.as_str();
+	if let Err(err) = db.execute(statement, &[&taxi.driver_id, &status, &status, &status, &status, &status]).await {
 		return (StatusCode::INTERNAL_SERVER_ERROR, err.to_string());
 	};
 	match db.execute("UPDATE users SET isdriver=true WHERE user_id=$1", &[&taxi.driver_id]).await {
@@ -324,20 +342,13 @@ national_id
 // taxi table + verified column
 
 // accessible to both the driver and admin
-pub async fn get_unverified_documents(db: State<DbClient>, Path(driver_id): Path<String>) -> impl IntoResponse {
+pub async fn get_unverified_documents(db: State<DbClient>, Path((driver_id,status)): Path<(String,DocumentVerificationStatus)>) -> impl IntoResponse {
 	let verification_documents = db.query_opt("SELECT * FROM taxi_verifications WHERE driver_id=$1", &[&driver_id]).await.unwrap();
-
 	match verification_documents {
 		Some(row) => {
 			let required = ["national_id", "insurance", "driving_license", "psv_license", "inspection_report"];
-			let missing = required.into_iter().filter(|r| !row.get::<_, bool>(r)).collect::<Vec<_>>();
-
-			// check if verification is complete and update status
-			if missing.is_empty() {
-				db.execute("UPDATE taxi SET verified=true WHERE driver_id=$1", &[&driver_id]).await.unwrap();
-			}
-
-			(StatusCode::OK, Json(missing))
+			let docs = required.into_iter().filter(|r| status.as_str()==row.get::<_, &str>(r)).collect::<Vec<_>>();
+			(StatusCode::OK, Json(docs))
 		}
 		None => (StatusCode::NOT_FOUND, Json(vec![])),
 	}
@@ -371,7 +382,7 @@ pub async fn get_unverified_document(Path((driver_id, document_type)): Path<(Str
 	(StatusCode::OK, Body::from_stream(stream))
 }
 
-pub async fn verify_document(db: State<DbClient>, Path((driver_id, document_type)): Path<(String, String)>) -> StatusCode {
+pub async fn verify_document(db: State<DbClient>, Path((driver_id,status, document_type)): Path<(String,DocumentVerificationStatus, String)>) -> StatusCode {
 	let column = match document_type.as_str() {
 		"NationalId" => "national_id",
 		"Insurance" => "insurance",
@@ -381,8 +392,8 @@ pub async fn verify_document(db: State<DbClient>, Path((driver_id, document_type
 		_ => return StatusCode::BAD_REQUEST,
 	};
 
-	let query = format!("UPDATE taxi_verifications SET {}=true WHERE driver_id=$1", column);
-	match db.0.execute(&query, &[&driver_id]).await {
+	let query = format!("UPDATE taxi_verifications SET {}=$1 WHERE driver_id=$2", column);
+	match db.0.execute(&query, &[&status.as_str(),&driver_id]).await {
 		Ok(_) => StatusCode::OK,
 		_ => StatusCode::INTERNAL_SERVER_ERROR,
 	}
