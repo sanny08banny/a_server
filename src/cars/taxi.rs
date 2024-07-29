@@ -84,6 +84,14 @@ pub struct Taxi {
 }
 
 
+pub async fn is_driver(db: State<DbClient>,id:Path<String>)->impl IntoResponse{
+	let Ok(y)=db.query_one("SELECT isdriver FROM users WHERE user_id=$1", &[&id.0]).await else{
+		return "false".to_owned();
+	};
+	let r:bool= y.get("");
+	return r.to_string();
+}
+
 pub async fn init_taxi(db: State<DbClient>, taxi: Json<Taxi>) -> impl IntoResponse {
 	let taxi = taxi.0;
 	let taxi_id = encryption_engine::CUSTOM_ENGINE.encode(format!("{}{}{}{}", taxi.driver_id, taxi.plate_number, taxi.model, taxi.color));

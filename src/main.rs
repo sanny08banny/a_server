@@ -50,6 +50,7 @@ async fn main() {
 		.route("/v1/search", post(search))
 		.route("/v1/delete_user", post(users::delete_user))
 		.route("/v1/delete_car", post(cars::cars::delete_car))
+		.route("/v1/taxi/isdriver/:driver_id", get(cars::taxi::is_driver))
 		.route("/v1/taxi/init", post(cars::taxi::init_taxi))
 		// .route("/v1/taxi/details", post(cars::taxi::taxi_details))
 		.route("/v1/taxi/images/:taxi_id", get(cars::taxi::taxi_images))
