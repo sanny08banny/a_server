@@ -88,7 +88,7 @@ pub async fn is_driver(db: State<DbClient>,id:Path<String>)->impl IntoResponse{
 	let Ok(y)=db.query_one("SELECT isdriver FROM users WHERE user_id=$1", &[&id.0]).await else{
 		return "false".to_owned();
 	};
-	let r:bool= y.get("");
+	let r:bool= y.get("isdriver");
 	return r.to_string();
 }
 
