@@ -301,7 +301,7 @@ ride_details.iteration+=1;
 
 
 pub async fn taxi_images(db: State<DbClient>, det: Path<String>) -> impl IntoResponse {
-	match db.query_opt("SELECT image_paths FROM taxi WHERE taxi_id=$1", &[&det.0]).await {
+	match db.query_opt("SELECT image_paths FROM taxi WHERE driver_id=$1", &[&det.0]).await {
 		Ok(taxi) =>{
 			match taxi {
 				Some(y) => return (StatusCode::OK, Json(Some(y.get::<_,Vec<String>>(0)))),
