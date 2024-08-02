@@ -34,7 +34,7 @@ async fn main() {
 		.route("/v1/taxi/image/:driver_id/:file_name", get(file_handler))
 		.route("/v1/book/accept", post(accept_book))
 		.route("/v1/process_payment", post(process_payment))
-		.route("/v1/car/multi_upload", post(multi_upload))
+		.route("/v1/car/multi_upload", post(multi_upload)).layer(DefaultBodyLimit::max(1024  * 10))
 		.route("/v1/user/tokens", post(query_token))
 		.route("/v1/path", post(call_back_url))
 		.route("/v1/user/new", post(create_user))
@@ -63,7 +63,6 @@ async fn main() {
 		.route("/v1/:driver_id/document/:status/:type", get(verify_document))
 		.with_state(db)
 		.layer(CorsLayer::permissive());
-		// .layer(DefaultBodyLimit::max(10240));
 
 	axum::serve(listener, app).await.unwrap()
 }

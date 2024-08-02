@@ -188,6 +188,7 @@ pub async fn multi_upload(db: State<DbClient>, mut multipart: Multipart) -> Stat
 						columns.push(String::from("national_id"));
 					}
 					_ => {
+						println!("hopefully image ");
 						let img_name = format!("img_{}.{}", index, "png");
 						let img = image::load_from_memory(&field.bytes().await.unwrap()).unwrap();
 						file_path.push_str(&img_name);
