@@ -2,7 +2,7 @@ use std::{fs, io::Write};
 
 use crate::{db_client::DbClient, fcm_t::fcm::book_request_status};
 use axum::{
-	extract::{multipart::Field, Multipart, State},
+	extract::{Multipart, State},
 	Json,
 };
 use hyper::StatusCode;
@@ -231,6 +231,7 @@ pub async fn multi_upload(db: State<DbClient>, mut multipart: Multipart) -> Stat
 						}
 					}
 					"taxi" =>{
+						println!("taxi");
 						if c > 0 {
 							let q = format!("UPDATE taxi SET image_paths={} WHERE taxi_id='{}'", images, car_id);
 							db.execute(q.as_str(), &[]).await.unwrap();
@@ -251,7 +252,7 @@ pub async fn multi_upload(db: State<DbClient>, mut multipart: Multipart) -> Stat
 			}
 			Ok(None) => break StatusCode::OK,
 			Err(err) => {
-				eprintln!("{:?}", err);
+				eprintln!("Unexpected:: {:?}", err);
 				break StatusCode::INTERNAL_SERVER_ERROR;
 			}
 		}
