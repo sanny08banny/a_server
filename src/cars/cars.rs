@@ -250,7 +250,7 @@ pub async fn multi_upload(db: State<DbClient>, mut multipart: Multipart) -> Stat
 			}
 			Ok(None) => break StatusCode::OK,
 			Err(err) => {
-				eprintln!("Error processing multipart upload: {}", err);
+				eprintln!("{:?}", err);
 				break StatusCode::INTERNAL_SERVER_ERROR;
 			}
 		}
