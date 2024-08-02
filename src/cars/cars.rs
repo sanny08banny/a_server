@@ -2,7 +2,7 @@ use std::{fs, io::Write};
 
 use crate::{db_client::DbClient, fcm_t::fcm::book_request_status};
 use axum::{
-	extract::{Multipart, State},
+	extract::{multipart::Field, Multipart, State},
 	Json,
 };
 use hyper::StatusCode;
@@ -241,6 +241,7 @@ pub async fn multi_upload(db: State<DbClient>, mut multipart: Multipart) -> Stat
 								_ => return StatusCode::INTERNAL_SERVER_ERROR,
 							}
 						}
+						break StatusCode::OK;
 					}
 					_=>{
 						break StatusCode::BAD_REQUEST;
