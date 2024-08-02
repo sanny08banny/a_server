@@ -1,4 +1,4 @@
-use axum::routing::{get, post, Router};
+use axum::{extract::DefaultBodyLimit, routing::{get, post, Router}};
 use cars::{
 	cars::{accept_book, get_cars, multi_upload, Car},
 	taxi::{accept_ride_request, decline_ride_request, get_unverified_document, get_unverified_documents, get_unverified_taxis, reqest_ride, taxi_price, verify_document},
@@ -62,7 +62,8 @@ async fn main() {
 		.route("/v1/:driver_id/document/unverified/:type", get(get_unverified_document))
 		.route("/v1/:driver_id/document/:status/:type", get(verify_document))
 		.with_state(db)
-		.layer(CorsLayer::permissive());
+		.layer(CorsLayer::permissive())
+		.layer(DefaultBodyLimit::max(10240));
 
 	axum::serve(listener, app).await.unwrap()
 }
