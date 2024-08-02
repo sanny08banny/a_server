@@ -62,8 +62,8 @@ async fn main() {
 		.route("/v1/:driver_id/document/unverified/:type", get(get_unverified_document))
 		.route("/v1/:driver_id/document/:status/:type", get(verify_document))
 		.with_state(db)
-		.layer(CorsLayer::permissive());
-		// .layer(DefaultBodyLimit::max(10240));
+		.layer(CorsLayer::permissive())
+		.layer(DefaultBodyLimit::max(10240));
 
 	axum::serve(listener, app).await.unwrap()
 }

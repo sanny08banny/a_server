@@ -2,7 +2,7 @@ use std::{fs, io::Write};
 
 use crate::{db_client::DbClient, fcm_t::fcm::book_request_status};
 use axum::{
-	extract::{multipart::Field, Multipart, State},
+	extract::{Multipart, State},
 	Json,
 };
 use hyper::StatusCode;
@@ -110,7 +110,7 @@ pub async fn multi_upload(db: State<DbClient>, mut multipart: Multipart) -> Stat
 				match name.as_str() {
 					"category" => {
 						category = field.text().await.unwrap().replace('"', "");
-		
+
 						if category == "taxi" {
 							file_path = "images/taxi/".to_owned();
 						} else if category == "car_hire" {
@@ -129,7 +129,8 @@ pub async fn multi_upload(db: State<DbClient>, mut multipart: Multipart) -> Stat
 						match fs::create_dir_all(&file_path) {
 							Ok(_) => {}
 							Err(e) => {
-								println!("failed to create directories {}", e)
+								println!("failed to create directories {}", e);
+								break StatusCode::INTERNAL_SERVER_ERROR;
 							}
 						}
 					}
@@ -198,50 +199,54 @@ pub async fn multi_upload(db: State<DbClient>, mut multipart: Multipart) -> Stat
 								println!("Failed to save image: {}", e)
 							}
 						}
-						println!("Length of `{}` ", file_path);
+						println!("Image path `{}` ", file_path);
 						images.push(img_name.clone());
 						file_path = file_path.replace(&img_name, "");
 					}
-				
-			}
-			let r = images.clone();
-			let c = r.len();
-			for (i, x) in r.iter().enumerate() {
-				images[i] = format!("'{}'", x);
-			}
-			let images = format!("ARRAY[{}]", images.join(","));
-			if category == "car_hire" {
-				if c > 0 {
-					let q = format!("UPDATE car SET car_images={} WHERE car_id='{}'", images, car_id);
-					db.execute(q.as_str(), &[]).await.unwrap();
-				} else {
-					println!("{}", images);
-					let token = 10.0;
-					let daily_price: f64 = daily_price.parse().unwrap();
-					let daily_down_payment: f64 = daily_down_payment.parse().unwrap();
-					let q = format!(
-						"INSERT INTO car (car_id,car_images, model, owner_id, location, description, daily_amount, daily_downpayment_amt, available,booking_tokens)
-				VALUES
-				  ('{}','{}', {}, '{}', '{}', '{}', {}, {}, {},{})",
-						car_id, images, model, user_id, location, description, daily_price, daily_down_payment, available, token
-					);
-					db.execute(q.as_str(), &[]).await.unwrap();
 				}
-			} else if category == "taxi" {
-				if c > 0 {
-					let q = format!("UPDATE taxi SET image_paths={} WHERE taxi_id='{}'", images, car_id);
-					db.execute(q.as_str(), &[]).await.unwrap();
+				let r = images.clone();
+				let c = r.len();
+				for (i, x) in r.iter().enumerate() {
+					images[i] = format!("'{}'", x);
 				}
-				for column in &columns {
-					let query = format!("UPDATE taxi_verifications SET {}=$1 WHERE driver_id=$2", column);
-					match db.0.execute(&query, &[&"Pending", &user_id]).await {
-						Ok(_) => return StatusCode::OK,
-						_ => return StatusCode::INTERNAL_SERVER_ERROR,
+				let images = format!("ARRAY[{}]", images.join(","));
+				match category.as_str() {
+					"car_hire" =>{
+						if c > 0 {
+							let q = format!("UPDATE car SET car_images={} WHERE car_id='{}'", images, car_id);
+							db.execute(q.as_str(), &[]).await.unwrap();
+						} else {
+							println!("{}", images);
+							let token = 10.0;
+							let daily_price: f64 = daily_price.parse().unwrap();
+							let daily_down_payment: f64 = daily_down_payment.parse().unwrap();
+							let q = format!(
+								"INSERT INTO car (car_id,car_images, model, owner_id, location, description, daily_amount, daily_downpayment_amt, available,booking_tokens)
+						VALUES
+						('{}','{}', {}, '{}', '{}', '{}', {}, {}, {},{})",
+									car_id, images, model, user_id, location, description, daily_price, daily_down_payment, available, token
+								);
+								db.execute(q.as_str(), &[]).await.unwrap();
+						}
+					}
+					"taxi" =>{
+						if c > 0 {
+							let q = format!("UPDATE taxi SET image_paths={} WHERE taxi_id='{}'", images, car_id);
+							db.execute(q.as_str(), &[]).await.unwrap();
+						}
+						for column in &columns {
+							let query = format!("UPDATE taxi_verifications SET {}=$1 WHERE driver_id=$2", column);
+							match db.0.execute(&query, &[&"Pending", &user_id]).await {
+								Ok(_) => return StatusCode::OK,
+								_ => return StatusCode::INTERNAL_SERVER_ERROR,
+							}
+						}
+					}
+					_=>{
+						break StatusCode::BAD_REQUEST;
 					}
 				}
 			}
-			return 	StatusCode::OK
-			},
 			Ok(None) => break StatusCode::OK,
 			Err(err) => {
 				eprintln!("Error processing multipart upload: {}", err);
@@ -249,7 +254,6 @@ pub async fn multi_upload(db: State<DbClient>, mut multipart: Multipart) -> Stat
 			}
 		}
 	}
-
 }
 
 fn save_file(parent_dir_path: &str, filename: &str, data: &[u8]) {
