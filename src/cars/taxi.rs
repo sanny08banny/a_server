@@ -167,7 +167,6 @@ dest_name:String,
 price:f64,
 declined:Vec<String>,
 pub iteration:i32,
-phone_number:String
 }
 
 
@@ -245,13 +244,17 @@ pub async fn start_ride_request(db: State<DbClient>,ride_details: RideDetails)->
 	// if min_distance>1800.00{
 	// 	return StatusCode::NOT_FOUND;
 	// }
+	let Ok(phone_number)=db.query_one("SELECT user_phone FROM users WHERE user_id=$1", &[&ride_details.pricing_details.rider_id]).await else{
+		return StatusCode::INTERNAL_SERVER_ERROR;
+	};
+	let phone_number=phone_number.get::<_,String>(0);
 	let notification_details=json!({
 		"sender_id":ride_details.pricing_details.rider_id,
 		"recipient_id":closest_driver,
 		"dest_lat":ride_details.pricing_details.dest_latitude,
 		"dest_lon":ride_details.pricing_details.dest_longitude,
 		"dest_name":ride_details.dest_name,
-		"phone_number":ride_details.phone_number,
+		"phone_number":phone_number,
 		"current_lat":ride_details.pricing_details.pick_up_latitude,
 		"current_lon":ride_details.pricing_details.pick_up_longitude,
 		"price":ride_details.price
