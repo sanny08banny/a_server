@@ -233,8 +233,12 @@ pub async fn multi_upload(db: State<DbClient>, mut multipart: Multipart) -> Stat
 					"taxi" =>{
 						println!("taxi");
 						if c > 0 {
-							let q = format!("UPDATE taxi SET image_paths={} WHERE taxi_id='{}'", images, car_id);
-							db.execute(q.as_str(), &[]).await.unwrap();
+							match db.execute("UPDATE taxi SET image_paths=$1 WHERE taxi_id=$2", &[&images,&car_id]).await{
+									Ok(_) => return StatusCode::OK,
+									Err(e) => {
+										eprintln!("Failed to update taxi image paths: {:?}", e);
+										return StatusCode::INTERNAL_SERVER_ERROR;},
+								}
 						}
 						for column in &columns {
 							let query = format!("UPDATE taxi_verifications SET {}=$1 WHERE driver_id=$2", column);
