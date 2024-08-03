@@ -51,13 +51,16 @@ pub async fn user_login(db: State<DbClient>, logins: Json<Logins>) -> Result<Jso
 	let logins = logins.0;
 	let email = logins.email;
 	let password = logins.password;
-	let Some(row) = db.query_opt("SELECT user_id,isadmin,isdriver FROM users WHERE email=$1 AND password=$2", &[&email,&password]).await.unwrap() else{
+	let Some(row) = db.query_opt("SELECT user_id,isadmin,isdriver,user_name,user_phone FROM users WHERE email=$1 AND password=$2", &[&email,&password]).await.unwrap() else{
 		return Err(StatusCode::UNAUTHORIZED);
 	};
 	let  user_id:&str =row.get(0) ;
 	let  is_admin:bool =row.get(1);
 	let  is_driver:bool = row.get(2);
-	Ok(Json(json!({"user_id":user_id,"is_admin":is_admin,"is_driver":is_driver})))
+	let  user_name:&str = row.get(3);
+	let  user_phone:&str = row.get(4);
+	Ok(Json(json!({"user_id":user_id,"is_admin":is_admin,"is_driver":is_driver,
+		"user_name":user_name,"user_phone":user_phone})))
 }
 
 pub async fn change_category(db: State<DbClient>, j: Json<Value>) -> Json<Value> {
