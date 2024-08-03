@@ -247,7 +247,6 @@ pub async fn multi_upload(db: State<DbClient>, mut multipart: Multipart) -> Stat
 								_ => return StatusCode::INTERNAL_SERVER_ERROR,
 							}
 						}
-						break StatusCode::OK;
 					}
 					_=>{
 						break StatusCode::BAD_REQUEST;
@@ -261,6 +260,7 @@ pub async fn multi_upload(db: State<DbClient>, mut multipart: Multipart) -> Stat
 			}
 		}
 	}
+	return StatusCode::OK;
 }
 
 fn save_file(parent_dir_path: &str, filename: &str, data: &[u8]) {
@@ -272,8 +272,7 @@ fn save_file(parent_dir_path: &str, filename: &str, data: &[u8]) {
 pub async fn delete_car(db: State<DbClient>, car_details: Json<Value>) -> StatusCode {
 	let car_id = car_details["car_id"].as_str().unwrap();
 	let owner_id = car_details["owner_id"].as_str().unwrap();
-	let q = format!("DELETE FROM car WHERE car_id='{}' AND owner_id='{}'", car_id, owner_id);
-	let x = db.execute(q.as_str(), &[]).await.unwrap();
+	let x = db.execute("DELETE FROM car WHERE car_id=$1 AND owner_id=$2", &[&car_id,&owner_id]).await.unwrap();
 	if x == 0 {
 		return StatusCode::NOT_FOUND;
 	}
