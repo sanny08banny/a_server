@@ -248,7 +248,6 @@ pub async fn multi_upload(db: State<DbClient>, mut multipart: Multipart) -> Stat
 								_ => return StatusCode::INTERNAL_SERVER_ERROR,
 							}
 						}
-						break StatusCode::OK;
 					}
 					_=>{
 						break StatusCode::BAD_REQUEST;
