@@ -130,7 +130,7 @@ pub async fn multi_upload(db: State<DbClient>, mut multipart: Multipart) -> Stat
 							Ok(_) => {}
 							Err(e) => {
 								println!("failed to create directories {}", e);
-								break StatusCode::INTERNAL_SERVER_ERROR;
+								return StatusCode::INTERNAL_SERVER_ERROR;
 							}
 						}
 					}
@@ -205,62 +205,72 @@ pub async fn multi_upload(db: State<DbClient>, mut multipart: Multipart) -> Stat
 						file_path = file_path.replace(&img_name, "");
 					}
 				}
-				let r = images.clone();
-				let c = r.len();
-				for (i, x) in r.iter().enumerate() {
-					images[i] = format!("'{}'", x);
-				}
-				let images = format!("ARRAY[{}]", images.join(","));
-				match category.as_str() {
-					"car_hire" =>{
-						if c > 0 {
-							let q = format!("UPDATE car SET car_images={} WHERE car_id='{}'", images, car_id);
-							db.execute(q.as_str(), &[]).await.unwrap();
-						} else {
-							println!("{}", images);
-							let token = 10.0;
-							let daily_price: f64 = daily_price.parse().unwrap();
-							let daily_down_payment: f64 = daily_down_payment.parse().unwrap();
-							let q = format!(
-								"INSERT INTO car (car_id,car_images, model, owner_id, location, description, daily_amount, daily_downpayment_amt, available,booking_tokens)
-						VALUES
-						('{}','{}', {}, '{}', '{}', '{}', {}, {}, {},{})",
-									car_id, images, model, user_id, location, description, daily_price, daily_down_payment, available, token
-								);
-								db.execute(q.as_str(), &[]).await.unwrap();
-						}
-					}
-					"taxi" =>{
-						println!("taxi");
-						if c > 0 {
-							let q = format!("UPDATE taxi SET image_paths={} WHERE taxi_id='{}'", images, car_id);
-							match db.execute(q.as_str(), &[]).await{
-									Ok(_) => continue,
-									Err(e) => {
-										eprintln!("Failed to update taxi image paths: {:?}", e);
-										return StatusCode::INTERNAL_SERVER_ERROR;},
-								}
-						}
-						for column in &columns {
-							let query = format!("UPDATE taxi_verifications SET {}=$1 WHERE driver_id=$2", column);
-							match db.0.execute(&query, &[&"Pending", &user_id]).await {
-								Ok(_) => return StatusCode::OK,
-								_ => return StatusCode::INTERNAL_SERVER_ERROR,
-							}
-						}
-					}
-					_=>{
-						break StatusCode::BAD_REQUEST;
-					}
-				}
 			}
-			Ok(None) => break StatusCode::OK,
+			Ok(None) => break,
 			Err(err) => {
 				eprintln!("Unexpected:: {:?}", err);
-				break StatusCode::INTERNAL_SERVER_ERROR;
+				return StatusCode::INTERNAL_SERVER_ERROR;
 			}
 		}
 	}
+	let r = images.clone();
+	let c = r.len();
+	for (i, x) in r.iter().enumerate() {
+		images[i] = format!("'{}'", x);
+	}
+	let images = format!("ARRAY[{}]", images.join(","));
+	match category.as_str() {
+		"car_hire" =>{
+			if c > 0 {
+				let q = format!("UPDATE car SET car_images={} WHERE car_id='{}'", images, car_id);
+				db.execute(q.as_str(), &[]).await.unwrap();
+				return StatusCode::OK;
+			} else {
+				println!("{}", images);
+				let token = 10.0;
+				let daily_price: f64 = daily_price.parse().unwrap();
+				let daily_down_payment: f64 = daily_down_payment.parse().unwrap();
+				let q = format!(
+					"INSERT INTO car (car_id,car_images, model, owner_id, location, description, daily_amount, daily_downpayment_amt, available,booking_tokens)
+			VALUES
+			('{}','{}', {}, '{}', '{}', '{}', {}, {}, {},{})",
+						car_id, images, model, user_id, location, description, daily_price, daily_down_payment, available, token
+					);
+					db.execute(q.as_str(), &[]).await.unwrap();
+					return StatusCode::OK;
+			}
+		}
+		"taxi" =>{
+			println!("taxi");
+			if c > 0 {
+				let q = format!("UPDATE taxi SET image_paths={} WHERE taxi_id='{}'", images, car_id);
+				match db.execute(q.as_str(), &[]).await{
+						Ok(_) => return StatusCode::OK,
+						Err(e) => {
+							eprintln!("Failed to update taxi image paths: {:?}", e);
+							return StatusCode::INTERNAL_SERVER_ERROR;},
+					}
+			}
+			for column in &columns {
+				let query = format!("UPDATE taxi_verifications SET {}=$1 WHERE driver_id=$2", column);
+				match db.0.execute(&query, &[&"Pending", &user_id]).await {
+					Ok(value) =>{
+						if 0==value{
+							return StatusCode::NOT_FOUND;
+						}else{
+							return StatusCode::OK;
+						}
+					},
+					_ => return StatusCode::INTERNAL_SERVER_ERROR,
+				}
+			}
+			return StatusCode::OK;
+		}
+		_=>{
+			return StatusCode::BAD_REQUEST;
+		}
+	}
+
 }
 
 fn save_file(parent_dir_path: &str, filename: &str, data: &[u8]) {
