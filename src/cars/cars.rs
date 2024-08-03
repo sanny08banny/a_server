@@ -260,7 +260,6 @@ pub async fn multi_upload(db: State<DbClient>, mut multipart: Multipart) -> Stat
 			}
 		}
 	}
-	return StatusCode::OK;
 }
 
 fn save_file(parent_dir_path: &str, filename: &str, data: &[u8]) {
