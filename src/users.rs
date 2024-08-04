@@ -55,10 +55,14 @@ pub async fn user_login(db: State<DbClient>, logins: Json<Logins>) -> Result<Jso
 		return Err(StatusCode::UNAUTHORIZED);
 	};
 	let  user_id:&str =row.get(0) ;
+	let  _is_admin:bool = row.get(1);
+	let  is_driver:bool = row.get(2);
 	let  user_name:&str = row.get(3);
 	let  user_phone:&str = row.get(4);
 	Ok(Json(json!({"user_id":user_id,
-		"user_name":user_name,"user_phone":user_phone})))
+		"user_name":user_name,
+		"is_driver":is_driver,
+		"user_phone":user_phone})))
 }
 
 pub async fn change_category(db: State<DbClient>, j: Json<Value>) -> Json<Value> {
