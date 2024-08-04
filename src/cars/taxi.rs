@@ -350,6 +350,7 @@ pub async fn get_unverified_documents(db: State<DbClient>, Path((driver_id,statu
 		Some(row) => {
 			let required = ["national_id", "insurance", "driving_license", "psv_license", "inspection_report"];
 			let docs = required.into_iter().filter(|r| status.as_str()==row.get::<_, &str>(r)).collect::<Vec<_>>();
+			println!("{:?}",docs);
 			if docs.is_empty() {
 				db.execute("UPDATE taxi SET verified=$1 WHERE driver_id=$2", &[&true, &driver_id]).await.unwrap();
 			}
