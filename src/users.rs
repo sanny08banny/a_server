@@ -55,11 +55,9 @@ pub async fn user_login(db: State<DbClient>, logins: Json<Logins>) -> Result<Jso
 		return Err(StatusCode::UNAUTHORIZED);
 	};
 	let  user_id:&str =row.get(0) ;
-	let  is_admin:bool =row.get(1);
-	let  is_driver:bool = row.get(2);
 	let  user_name:&str = row.get(3);
 	let  user_phone:&str = row.get(4);
-	Ok(Json(json!({"user_id":user_id,"is_admin":is_admin,"is_driver":is_driver,
+	Ok(Json(json!({"user_id":user_id,
 		"user_name":user_name,"user_phone":user_phone})))
 }
 
