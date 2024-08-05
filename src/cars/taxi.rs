@@ -22,11 +22,11 @@ pub enum TaxiCategory {
 	Economy,
 	Classic,
 	Xl,
-	BodaBoda
+	BodaBoda,
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
-pub enum DocumentVerificationStatus{
+pub enum DocumentVerificationStatus {
 	Unverified,
 	Verified,
 	Pending,
@@ -48,7 +48,7 @@ impl TaxiCategory {
 			TaxiCategory::Economy => "Economy",
 			TaxiCategory::Classic => "Classic",
 			TaxiCategory::Xl => "Xl",
-			TaxiCategory::BodaBoda=>"BodaBoda"
+			TaxiCategory::BodaBoda => "BodaBoda",
 		}
 	}
 }
@@ -80,7 +80,7 @@ impl<'a> FromSql<'a> for TaxiCategory {
 			"Economy" => Ok(TaxiCategory::Economy),
 			"Xl" => Ok(TaxiCategory::Xl),
 			"Classic" => Ok(TaxiCategory::Classic),
-			"BodaBoda"=>Ok(TaxiCategory::BodaBoda),
+			"BodaBoda" => Ok(TaxiCategory::BodaBoda),
 			unknown => Err(format!("Unknown Taxi category: {}", unknown).into()),
 		}
 	}
@@ -100,12 +100,11 @@ pub struct Taxi {
 	pub category: TaxiCategory,
 }
 
-
-pub async fn is_driver(db: State<DbClient>,id:Path<String>)->impl IntoResponse{
-	let Ok(y)=db.query_one("SELECT isdriver FROM users WHERE user_id=$1", &[&id.0]).await else{
+pub async fn is_driver(db: State<DbClient>, id: Path<String>) -> impl IntoResponse {
+	let Ok(y) = db.query_one("SELECT isdriver FROM users WHERE user_id=$1", &[&id.0]).await else {
 		return "false".to_owned();
 	};
-	let r:bool= y.get("isdriver");
+	let r: bool = y.get("isdriver");
 	return r.to_string();
 }
 
@@ -113,62 +112,62 @@ pub async fn init_taxi(db: State<DbClient>, taxi: Json<Taxi>) -> impl IntoRespon
 	let taxi = taxi.0;
 	let taxi_id = encryption_engine::CUSTOM_ENGINE.encode(format!("{}{}{}{}", taxi.driver_id, taxi.plate_number, taxi.model, taxi.color));
 	// debug
-	let _=db.execute("DELETE FROM taxi WHERE driver_id=$1", &[&taxi.driver_id]).await;
-	let _=db.execute("DELETE FROM taxi_verifications WHERE driver_id=$1", &[&taxi.driver_id]).await;
+	let _ = db.execute("DELETE FROM taxi WHERE driver_id=$1", &[&taxi.driver_id]).await;
+	let _ = db.execute("DELETE FROM taxi_verifications WHERE driver_id=$1", &[&taxi.driver_id]).await;
 	match db.query_one("SELECT user_id FROM users WHERE user_id=$1", &[&taxi.driver_id]).await {
-    Ok(_)=>{
-	let statement = "INSERT INTO taxi (taxi_id,driver_id,model,color,plate_number,category,manufacturer,verified) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)";
-	if let Err(err) = db
-		.execute(
-			statement,
-			&[&taxi_id, &taxi.driver_id, &taxi.model, &taxi.color, &taxi.plate_number, &taxi.category, &taxi.manufacturer, &false],
-		)
-		.await
-	{
-		return (StatusCode::INTERNAL_SERVER_ERROR, err.to_string());
-	};
+		Ok(_) => {
+			let statement = "INSERT INTO taxi (taxi_id,driver_id,model,color,plate_number,category,manufacturer,verified) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)";
+			if let Err(err) = db
+				.execute(
+					statement,
+					&[&taxi_id, &taxi.driver_id, &taxi.model, &taxi.color, &taxi.plate_number, &taxi.category, &taxi.manufacturer, &false],
+				)
+				.await
+			{
+				return (StatusCode::INTERNAL_SERVER_ERROR, err.to_string());
+			};
 
-	let statement = "INSERT INTO taxi_verifications (driver_id, inspection_report, insurance, driving_license, psv_license, national_id) VALUES ($1,$2,$3,$4,$5,$6)";
-	let status=DocumentVerificationStatus::Unverified.as_str();
-	if let Err(err) = db.execute(statement, &[&taxi.driver_id, &status, &status, &status, &status, &status]).await {
-		return (StatusCode::INTERNAL_SERVER_ERROR, err.to_string());
-	};
-	match db.execute("UPDATE users SET isdriver=true WHERE user_id=$1", &[&taxi.driver_id]).await {
-		Ok(_) => (StatusCode::OK, taxi_id),
-		Err(e) => (StatusCode::INTERNAL_SERVER_ERROR,e.to_string()),
-	}},
-	Err(_)=>(StatusCode::NOT_FOUND,"User account not found".to_string())
-}
-}
-
-#[derive(serde::Serialize, serde::Deserialize, Debug)]
-struct TaxiLocation{
-driver_id:String,
-latitude:f64,
-longitude:f64,
-orientation:f64,
-seats:i32,
+			let statement = "INSERT INTO taxi_verifications (driver_id, inspection_report, insurance, driving_license, psv_license, national_id) VALUES ($1,$2,$3,$4,$5,$6)";
+			let status = DocumentVerificationStatus::Unverified.as_str();
+			if let Err(err) = db.execute(statement, &[&taxi.driver_id, &status, &status, &status, &status, &status]).await {
+				return (StatusCode::INTERNAL_SERVER_ERROR, err.to_string());
+			};
+			match db.execute("UPDATE users SET isdriver=true WHERE user_id=$1", &[&taxi.driver_id]).await {
+				Ok(_) => (StatusCode::OK, taxi_id),
+				Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
+			}
+		}
+		Err(_) => (StatusCode::NOT_FOUND, "User account not found".to_string()),
+	}
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
-pub struct PricingDetails{
-rider_id:String,
-pick_up_latitude:f64,
-pick_up_longitude:f64,
-dest_latitude:f64,
-dest_longitude:f64,
-taxi_category:TaxiCategory,
+struct TaxiLocation {
+	driver_id: String,
+	latitude: f64,
+	longitude: f64,
+	orientation: f64,
+	seats: i32,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
-pub struct RideDetails{
-pricing_details:PricingDetails,
-dest_name:String,
-price:f64,
-declined:Vec<String>,
-pub iteration:i32,
+pub struct PricingDetails {
+	rider_id: String,
+	pick_up_latitude: f64,
+	pick_up_longitude: f64,
+	dest_latitude: f64,
+	dest_longitude: f64,
+	taxi_category: TaxiCategory,
 }
 
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
+pub struct RideDetails {
+	pricing_details: PricingDetails,
+	dest_name: String,
+	price: f64,
+	declined: Vec<String>,
+	pub iteration: i32,
+}
 
 pub const EARTH_RADIUS: f64 = 6_366_707.0195;
 
@@ -185,70 +184,77 @@ pub fn great_circle_distance(a: (f64, f64), b: (f64, f64)) -> f64 {
 	central_angle * EARTH_RADIUS
 }
 
-pub async fn taxi_price(ride_details: Json<PricingDetails>)->String{
-let distance=great_circle_distance((ride_details.pick_up_latitude,ride_details.pick_up_longitude), (ride_details.dest_latitude,ride_details.pick_up_longitude))/1000.00;
-let price:f64;
-match ride_details.taxi_category {
-	TaxiCategory::Economy => price=distance*50.00+120.00,
-	TaxiCategory::Classic => price=distance*55.00+150.00,
-	TaxiCategory::Xl => price=distance*65.00+200.00,
-	TaxiCategory::BodaBoda=>price=distance*50.00+50.00,
-}
-price.round().to_string()
+pub async fn taxi_price(ride_details: Json<PricingDetails>) -> String {
+	let distance = great_circle_distance(
+		(ride_details.pick_up_latitude, ride_details.pick_up_longitude),
+		(ride_details.dest_latitude, ride_details.pick_up_longitude),
+	) / 1000.00;
+	let price: f64;
+	match ride_details.taxi_category {
+		TaxiCategory::Economy => price = distance * 50.00 + 120.00,
+		TaxiCategory::Classic => price = distance * 55.00 + 150.00,
+		TaxiCategory::Xl => price = distance * 65.00 + 200.00,
+		TaxiCategory::BodaBoda => price = distance * 50.00 + 50.00,
+	}
+	price.round().to_string()
 }
 
-pub async fn reqest_ride(db: State<DbClient>,ride_details: Json<RideDetails>)->StatusCode {
-	let ride_details=ride_details.0;
+pub async fn reqest_ride(db: State<DbClient>, ride_details: Json<RideDetails>) -> StatusCode {
+	let ride_details = ride_details.0;
 	start_ride_request(db, ride_details).await
 }
 
-pub async fn start_ride_request(db: State<DbClient>,ride_details: RideDetails)->StatusCode{
+pub async fn start_ride_request(db: State<DbClient>, ride_details: RideDetails) -> StatusCode {
 	let client_lat = ride_details.pricing_details.pick_up_latitude;
 	let client_log = ride_details.pricing_details.pick_up_longitude;
-	let mut closest_driver=String::new();
-	let mut min_distance=0.00;
-	let mut i=0;
-	let mut skip=false;
-    let firebase=Firebase::new("https://naturaw-64116-default-rtdb.firebaseio.com/").unwrap().at("taxis").at("available").at(ride_details.pricing_details.taxi_category.as_str());
-    let Ok(base)=firebase.get::<HashMap<String,TaxiLocation>>().await else{
+	let mut closest_driver = String::new();
+	let mut min_distance = 0.00;
+	let mut i = 0;
+	let mut skip = false;
+	let firebase = Firebase::new("https://naturaw-64116-default-rtdb.firebaseio.com/")
+		.unwrap()
+		.at("taxis")
+		.at("available")
+		.at(ride_details.pricing_details.taxi_category.as_str());
+	let Ok(base) = firebase.get::<HashMap<String, TaxiLocation>>().await else {
 		return StatusCode::INTERNAL_SERVER_ERROR;
 	};
-	for (_x,y) in base {
+	for (_x, y) in base {
 		for driver in &ride_details.declined {
-			if driver==&y.driver_id{
-				skip=true;
+			if driver == &y.driver_id {
+				skip = true;
 				break;
 			}
 		}
-		if skip{
+		if skip {
 			continue;
 		}
 		let driver_lat = y.latitude;
 		let driver_lon: f64 = y.longitude;
-		let distance=great_circle_distance((client_lat,client_log), (driver_lat,driver_lon));
-		if i==0{
-			min_distance=distance;
-			closest_driver=y.driver_id;
-		}else if distance<min_distance{
-			min_distance=distance;
-			closest_driver=y.driver_id;
+		let distance = great_circle_distance((client_lat, client_log), (driver_lat, driver_lon));
+		if i == 0 {
+			min_distance = distance;
+			closest_driver = y.driver_id;
+		} else if distance < min_distance {
+			min_distance = distance;
+			closest_driver = y.driver_id;
 		}
-		if min_distance<=500.00{
+		if min_distance <= 500.00 {
 			break;
-		}else if ride_details.iteration >5 &&min_distance<=1500.00 {
+		} else if ride_details.iteration > 5 && min_distance <= 1500.00 {
 			break;
 		}
-		i+=1;
+		i += 1;
 	}
-	println!("{}",min_distance);
+	println!("{}", min_distance);
 	// if min_distance>1800.00{
 	// 	return StatusCode::NOT_FOUND;
 	// }
-	let Ok(phone_number)=db.query_one("SELECT user_phone FROM users WHERE user_id=$1", &[&ride_details.pricing_details.rider_id]).await else{
+	let Ok(phone_number) = db.query_one("SELECT user_phone FROM users WHERE user_id=$1", &[&ride_details.pricing_details.rider_id]).await else {
 		return StatusCode::INTERNAL_SERVER_ERROR;
 	};
-	let phone_number=phone_number.get::<_,String>(0);
-	let notification_details=json!({
+	let phone_number = phone_number.get::<_, String>(0);
+	let notification_details = json!({
 		"sender_id":ride_details.pricing_details.rider_id,
 		"recipient_id":closest_driver,
 		"dest_lat":ride_details.pricing_details.dest_latitude,
@@ -262,14 +268,13 @@ pub async fn start_ride_request(db: State<DbClient>,ride_details: RideDetails)->
 	start_notification(&db.0, notification_details, UserType::Driver).await
 }
 
-
 pub async fn accept_ride_request(db: State<DbClient>, res: Json<Value>) -> StatusCode {
 	let res = res.0;
-	let Some(client_id) = res["client_id"].as_str() else{
+	let Some(client_id) = res["client_id"].as_str() else {
 		return StatusCode::NO_CONTENT;
 	};
-	let Some(driver_id) = res["driver_id"].as_str() else{
-	    return  StatusCode::NO_CONTENT;
+	let Some(driver_id) = res["driver_id"].as_str() else {
+		return StatusCode::NO_CONTENT;
 	};
 
 	let Ok(res) = db.query_one("SELECT notification_token,user_name FROM users WHERE user_id=$1", &[&client_id]).await else {
@@ -295,21 +300,17 @@ pub async fn accept_ride_request(db: State<DbClient>, res: Json<Value>) -> Statu
 	StatusCode::OK
 }
 
-
-pub async fn decline_ride_request(db: State<DbClient>,ride_details:Json<RideDetails>){
-let mut ride_details=ride_details.0;
-ride_details.iteration+=1;
+pub async fn decline_ride_request(db: State<DbClient>, ride_details: Json<RideDetails>) {
+	let mut ride_details = ride_details.0;
+	ride_details.iteration += 1;
 	start_ride_request(db, ride_details).await;
 }
 
-
 pub async fn taxi_images(db: State<DbClient>, det: Path<String>) -> impl IntoResponse {
 	match db.query_opt("SELECT image_paths FROM taxi WHERE driver_id=$1", &[&det.0]).await {
-		Ok(taxi) =>{
-			match taxi {
-				Some(y) => return (StatusCode::OK, Json(Some(y.get::<_,Vec<String>>(0)))),
-				None => return (StatusCode::NOT_FOUND,Json(None)),
-			}
+		Ok(taxi) => match taxi {
+			Some(y) => return (StatusCode::OK, Json(Some(y.get::<_, Vec<String>>(0)))),
+			None => return (StatusCode::NOT_FOUND, Json(None)),
 		},
 		Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(None)),
 	}
@@ -326,7 +327,7 @@ pub async fn get_unverified_taxis(db: State<DbClient>) -> Json<Vec<UnverifiedDri
 	let mut drivers = Vec::with_capacity(rows.len());
 	for row in rows {
 		let driver_id: String = row.get(0);
-		let name:String = db.query_one("SELECT user_name FROM users WHERE user_id=$1", &[&driver_id]).await.unwrap().get(0);
+		let name: String = db.query_one("SELECT user_name FROM users WHERE user_id=$1", &[&driver_id]).await.unwrap().get(0);
 		drivers.push(UnverifiedDriver { name, driver_id })
 	}
 	Json(drivers)
@@ -344,16 +345,15 @@ national_id
 // taxi table + verified column
 
 // accessible to both the driver and admin
-pub async fn get_unverified_documents(db: State<DbClient>, Path((driver_id,status)): Path<(String,DocumentVerificationStatus)>) -> impl IntoResponse {
+pub async fn get_unverified_documents(db: State<DbClient>, Path((driver_id, status)): Path<(String, DocumentVerificationStatus)>) -> impl IntoResponse {
 	let verification_documents = db.query_opt("SELECT * FROM taxi_verifications WHERE driver_id=$1", &[&driver_id]).await.unwrap();
 	match verification_documents {
 		Some(row) => {
 			let required = ["national_id", "insurance", "driving_license", "psv_license", "inspection_report"];
-			let docs = required.into_iter().filter(|r| status.as_str()==row.get::<_, &str>(r)).collect::<Vec<_>>();
-			println!("{:?}",docs);
-			if docs.is_empty() {
-				db.execute("UPDATE taxi SET verified=$1 WHERE driver_id=$2", &[&true, &driver_id]).await.unwrap();
-			}
+			let docs = required.into_iter().filter(|r| status.as_str() == row.get::<_, &str>(r)).collect::<Vec<_>>();
+			// if docs.is_empty() {
+			// 	db.execute("UPDATE taxi SET verified=$1 WHERE driver_id=$2", &[&true, &driver_id]).await.unwrap();
+			// }
 			(StatusCode::OK, Json(docs))
 		}
 		None => (StatusCode::NOT_FOUND, Json(vec![])),
@@ -388,7 +388,7 @@ pub async fn get_unverified_document(Path((driver_id, document_type)): Path<(Str
 	(StatusCode::OK, Body::from_stream(stream))
 }
 
-pub async fn verify_document(db: State<DbClient>, Path((driver_id,status, document_type)): Path<(String,DocumentVerificationStatus, String)>) -> StatusCode {
+pub async fn verify_document(db: State<DbClient>, Path((driver_id, status, document_type)): Path<(String, DocumentVerificationStatus, String)>) -> StatusCode {
 	let column = match document_type.as_str() {
 		"NationalId" => "national_id",
 		"Insurance" => "insurance",
@@ -399,8 +399,23 @@ pub async fn verify_document(db: State<DbClient>, Path((driver_id,status, docume
 	};
 
 	let query = format!("UPDATE taxi_verifications SET {}=$1 WHERE driver_id=$2", column);
-	match db.0.execute(&query, &[&status.as_str(),&driver_id]).await {
-		Ok(_) => StatusCode::OK,
-		_ => StatusCode::INTERNAL_SERVER_ERROR,
+	match db.0.execute(&query, &[&status.as_str(), &driver_id]).await {
+		Ok(_) => {}
+		_ => return StatusCode::INTERNAL_SERVER_ERROR,
 	}
+	let verification_documents = db.query_opt("SELECT * FROM taxi_verifications WHERE driver_id=$1", &[&driver_id]).await.unwrap();
+	let required = ["national_id", "insurance", "driving_license", "psv_license", "inspection_report"];
+	match verification_documents {
+		Some(row) => {
+			let docs = required
+				.into_iter()
+				.filter(|r| DocumentVerificationStatus::Unverified.as_str() == row.get::<_, &str>(r) || DocumentVerificationStatus::Pending.as_str() == row.get::<_, &str>(r))
+				.collect::<Vec<_>>();
+			if docs.is_empty() {
+				db.execute("UPDATE taxi SET verified=$1 WHERE driver_id=$2", &[&true, &driver_id]).await.unwrap();
+			}
+		}
+		None => return StatusCode::NOT_FOUND,
+	}
+	StatusCode::OK
 }

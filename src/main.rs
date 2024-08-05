@@ -28,7 +28,6 @@ use crate::search::search;
 async fn main() {
 	let listener = tokio::net::TcpListener::bind("0.0.0.0:4000").await.unwrap();
 	let db = db_client::db_client().await;
- 
 	let app = Router::new()
 		.route("/v1/cars", get(get_cars))
 		.route("/v1/taxi/image/:driver_id/:file_name", get(file_handler))
