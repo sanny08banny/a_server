@@ -165,7 +165,6 @@ pub struct RideDetails {
 	dest_name: String,
 	price: f64,
 	declined: Vec<String>,
-	pub iteration: i32,
 	taxi_category: TaxiCategory,
 }
 
@@ -239,7 +238,7 @@ pub async fn start_ride_request(db: State<DbClient>, ride_details: RideDetails) 
 		}
 		if min_distance <= 500.00 {
 			break;
-		} else if ride_details.iteration > 5 && min_distance <= 1500.00 {
+		} else if ride_details.declined.len() > 5 && min_distance <= 1500.00 {
 			break;
 		}
 		i += 1;
@@ -299,9 +298,7 @@ pub async fn accept_ride_request(db: State<DbClient>, res: Json<Value>) -> Statu
 }
 
 pub async fn decline_ride_request(db: State<DbClient>, ride_details: Json<RideDetails>) {
-	let mut ride_details = ride_details.0;
-	ride_details.iteration += 1;
-	start_ride_request(db, ride_details).await;
+	start_ride_request(db, ride_details.0).await;
 }
 
 pub async fn taxi_images(db: State<DbClient>, det: Path<String>) -> impl IntoResponse {
