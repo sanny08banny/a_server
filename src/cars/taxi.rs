@@ -157,7 +157,6 @@ pub struct PricingDetails {
 	pick_up_longitude: f64,
 	dest_latitude: f64,
 	dest_longitude: f64,
-	// taxi_category: TaxiCategory,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
