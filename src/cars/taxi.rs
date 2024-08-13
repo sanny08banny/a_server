@@ -157,7 +157,7 @@ pub struct PricingDetails {
 	pick_up_longitude: f64,
 	dest_latitude: f64,
 	dest_longitude: f64,
-	taxi_category: TaxiCategory,
+	// taxi_category: TaxiCategory,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
@@ -167,6 +167,7 @@ pub struct RideDetails {
 	price: f64,
 	declined: Vec<String>,
 	pub iteration: i32,
+	taxi_category: TaxiCategory,
 }
 
 pub const EARTH_RADIUS: f64 = 6_366_707.0195;
@@ -184,19 +185,17 @@ pub fn great_circle_distance(a: (f64, f64), b: (f64, f64)) -> f64 {
 	central_angle * EARTH_RADIUS
 }
 
-pub async fn taxi_price(ride_details: Json<PricingDetails>) -> String {
+pub async fn taxi_price(ride_details: Json<PricingDetails>) -> impl IntoResponse {
 	let distance = great_circle_distance(
 		(ride_details.pick_up_latitude, ride_details.pick_up_longitude),
 		(ride_details.dest_latitude, ride_details.pick_up_longitude),
 	) / 1000.00;
-	let price: f64;
-	match ride_details.taxi_category {
-		TaxiCategory::Economy => price = distance * 50.00 + 120.00,
-		TaxiCategory::Classic => price = distance * 55.00 + 150.00,
-		TaxiCategory::Xl => price = distance * 65.00 + 200.00,
-		TaxiCategory::BodaBoda => price = distance * 50.00 + 50.00,
-	}
-	price.round().to_string()
+	Json(json!({
+			TaxiCategory::Economy.as_str(): (distance * 50.00 + 120.00).round(),
+			TaxiCategory::Classic.as_str() : (distance * 55.00 + 150.00).round(),
+			TaxiCategory::Xl.as_str() : (distance * 65.00 + 200.00).round(),
+			TaxiCategory::BodaBoda.as_str() :(distance * 50.00 + 50.00).round(),
+	}))
 }
 
 pub async fn reqest_ride(db: State<DbClient>, ride_details: Json<RideDetails>) -> StatusCode {
@@ -215,7 +214,7 @@ pub async fn start_ride_request(db: State<DbClient>, ride_details: RideDetails) 
 		.unwrap()
 		.at("taxis")
 		.at("available")
-		.at(ride_details.pricing_details.taxi_category.as_str());
+		.at(ride_details.taxi_category.as_str());
 	let Ok(base) = firebase.get::<HashMap<String, TaxiLocation>>().await else {
 		return StatusCode::INTERNAL_SERVER_ERROR;
 	};
@@ -351,9 +350,6 @@ pub async fn get_unverified_documents(db: State<DbClient>, Path((driver_id, stat
 		Some(row) => {
 			let required = ["national_id", "insurance", "driving_license", "psv_license", "inspection_report"];
 			let docs = required.into_iter().filter(|r| status.as_str() == row.get::<_, &str>(r)).collect::<Vec<_>>();
-			// if docs.is_empty() {
-			// 	db.execute("UPDATE taxi SET verified=$1 WHERE driver_id=$2", &[&true, &driver_id]).await.unwrap();
-			// }
 			(StatusCode::OK, Json(docs))
 		}
 		None => (StatusCode::NOT_FOUND, Json(vec![])),
