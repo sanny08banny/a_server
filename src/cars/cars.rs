@@ -231,10 +231,10 @@ pub async fn multi_upload(db: State<DbClient>, mut multipart: Multipart) -> Stat
 				let daily_price: f64 = daily_price.parse().unwrap();
 				let daily_down_payment: f64 = daily_down_payment.parse().unwrap();
 				let q = format!(
-					"INSERT INTO car (car_id,car_images, model, owner_id, location, description, daily_amount, daily_downpayment_amt, available,booking_tokens)
+					"INSERT INTO car (car_id, model, owner_id, location, description, daily_amount, daily_downpayment_amt, available,booking_tokens)
 			VALUES
-			('{}','{}', {}, '{}', '{}', '{}', {}, {}, {},{})",
-						car_id, images, model, user_id, location, description, daily_price, daily_down_payment, available, token
+			('{}', {}, '{}', '{}', '{}', {}, {}, {},{})",
+						car_id, model, user_id, location, description, daily_price, daily_down_payment, available, token
 					);
 					db.execute(q.as_str(), &[]).await.unwrap();
 					return StatusCode::OK;
