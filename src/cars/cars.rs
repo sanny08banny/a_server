@@ -233,7 +233,7 @@ pub async fn multi_upload(db: State<DbClient>, mut multipart: Multipart) -> Stat
 
 			db.execute("INSERT INTO car (car_id,car_images, model, owner_id, location, description, daily_amount, daily_downpayment_amt, available,booking_tokens)
 			VALUES
-			($1,'$2', $3, $4, $5, $6, $7, $8, $9,$10)", 
+			($1,{$2}, $3, $4, $5, $6, $7, $8, $9,$10)", 
 			&[
 				&car_id,
 				&images,
