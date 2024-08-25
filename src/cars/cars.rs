@@ -236,7 +236,7 @@ pub async fn multi_upload(db: State<DbClient>, mut multipart: Multipart) -> Stat
 			($1,$2, $3, $4, $5, $6, $7, $8, $9,$10)", 
 			&[
 				&car_id,
-				&images,
+				&r,
 				&model,
 				&user_id,
 				&location,
