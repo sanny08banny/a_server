@@ -233,7 +233,7 @@ pub async fn multi_upload(db: State<DbClient>, mut multipart: Multipart) -> Stat
 				let q = format!(
 					"INSERT INTO car (car_id,car_images, model, owner_id, location, description, daily_amount, daily_downpayment_amt, available,booking_tokens)
 			VALUES
-			('{}',{}, '{}', '{}', '{}', '{}', {}, {}, {},{})",
+			('{}','{}', '{}', '{}', '{}', '{}', {}, {}, {},{})",
 						car_id, images, model, user_id, location, description, daily_price, daily_down_payment, available, token
 					);
 					db.execute(q.as_str(), &[]).await.unwrap();
