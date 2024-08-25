@@ -4,7 +4,7 @@ use cars::{
 	taxi::{accept_ride_request, decline_ride_request, get_unverified_document, get_unverified_documents, get_unverified_taxis, reqest_ride, taxi_price, verify_document},
 };
 use fcm_t::token::update_token;
-use file_server::file_handler;
+use file_server::{file_handler, get_car};
 use payment_gateway::mpesa_payment_gateway::{call_back_url, process_payment};
 use review::{create_review, get_review};
 use tokens::r_tokens::query_token;
@@ -31,6 +31,7 @@ async fn main() {
 	let app = Router::new()
 		.route("/v1/cars", get(get_cars))
 		.route("/v1/taxi/image/:driver_id/:file_name", get(file_handler))
+		.route("/v1/car/image/:owner_id/:car_id/:file_name", get(get_car))
 		.route("/v1/book/accept", post(accept_book))
 		.route("/v1/process_payment", post(process_payment))
 		.route("/v1/car/multi_upload", post(multi_upload)).layer(DefaultBodyLimit::disable())
