@@ -227,7 +227,7 @@ pub async fn multi_upload(db: State<DbClient>, mut multipart: Multipart) -> Stat
 			// 	return StatusCode::OK;
 			// } else {
 				println!("{}", images);
-				let token = "10.00";
+				let token = 10.00;
 				let daily_price: f64 = daily_price.parse().unwrap();
 				let daily_down_payment: f64 = daily_down_payment.parse().unwrap();
 
