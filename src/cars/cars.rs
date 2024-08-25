@@ -123,7 +123,7 @@ pub async fn multi_upload(db: State<DbClient>, mut multipart: Multipart) -> Stat
 					}
 					"car_id" => {
 						car_id = field.text().await.unwrap().replace('"', "");
-						if category == "hire" {
+						if category == "car_hire" {
 							file_path = file_path + &car_id + "/";
 						}
 						match fs::create_dir_all(&file_path) {
