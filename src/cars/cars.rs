@@ -17,8 +17,8 @@ pub struct Car {
 	pub owner_id: String,
 	pub location: String,
 	pub description: String,
-	pub daily_price: f64,
-	pub daily_down_payment: f64,
+	pub  daily_amount : f64,
+	pub daily_downpayment_amt: f64,
 	pub available: bool,
 }
 
