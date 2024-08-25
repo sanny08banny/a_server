@@ -17,8 +17,8 @@ pub struct Car {
 	pub owner_id: String,
 	pub location: String,
 	pub description: String,
-	pub amount: f64,
-	pub downpayment_amt: f64,
+	pub daily_price: f64,
+	pub daily_down_payment: f64,
 	pub available: bool,
 }
 
@@ -40,7 +40,7 @@ pub enum BookingDetailsDesc {
 
 pub async fn get_cars(db: State<DbClient>) -> Json<Vec<Car>> {
 	let rows = db.query("SELECT * FROM car", &[]).await.unwrap();
-	let cars = rows.iter().map(Car::from_row).collect();
+	let cars: Vec<Car> = rows.iter().map(Car::from_row).collect();
 	Json(cars)
 }
 
