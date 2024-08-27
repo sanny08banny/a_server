@@ -48,7 +48,7 @@ pub async fn get_cars(db: State<DbClient>) -> Json<Vec<Car>> {
 pub async fn handle_book(db: State<DbClient>, details: Json<BookingRequest>) -> StatusCode {
 	let request = details.0;
 	let mut details = json!({
-		"client_id":request.owner_id,
+		"sender_id":request.owner_id,
 		"recipient_id":request.user_id,
 	});
 
