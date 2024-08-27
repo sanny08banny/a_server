@@ -6,7 +6,7 @@ use serde_json::Value;
 use crate::encryption_engine::CUSTOM_ENGINE;
 
 #[derive(serde::Deserialize, serde::Serialize)]
-struct Comment {
+pub struct Comment {
 	id: String,
 	user_name: String,
 	title: String,
@@ -44,7 +44,7 @@ pub async fn get_review(ids: Json<Value>) -> Json<CarReview> {
 	})
 }
 
-pub async fn create_review(rev: Json<Value>) {
+pub async fn create_review(rev: Json<Value>) -> Json<Comment> {
 	let rev = rev.0;
 	let user_name = rev.get("user_id").unwrap().to_string();
 	let title = rev.get("title").unwrap().to_string();
@@ -56,11 +56,11 @@ pub async fn create_review(rev: Json<Value>) {
 	let input = format!("{}{}{}", car_id, owner_id, timestamp);
 	let id = CUSTOM_ENGINE.encode(input);
 
-	let rev = Comment {
+	Json(Comment {
 		id,
 		user_name,
 		title,
 		comment,
 		rating,
-	};
+	})
 }

@@ -17,7 +17,7 @@ pub struct Car {
 	pub owner_id: String,
 	pub location: String,
 	pub description: String,
-	pub  daily_amount : f64,
+	pub daily_amount: f64,
 	pub daily_downpayment_amt: f64,
 	pub available: bool,
 }
@@ -220,66 +220,58 @@ pub async fn multi_upload(db: State<DbClient>, mut multipart: Multipart) -> Stat
 	}
 	let images = format!("ARRAY[{}]", images.join(","));
 	match category.as_str() {
-		"car_hire" =>{
+		"car_hire" => {
 			// if c > 0 {
 			// 	let q = format!("UPDATE car SET car_images={} WHERE car_id='{}'", images, car_id);
 			// 	db.execute(q.as_str(), &[]).await.unwrap();
 			// 	return StatusCode::OK;
 			// } else {
-				println!("{}", images);
-				let token = 10.00;
-				let daily_price: f64 = daily_price.parse().unwrap();
-				let daily_down_payment: f64 = daily_down_payment.parse().unwrap();
+			println!("{}", images);
+			let daily_price: f64 = daily_price.parse().unwrap();
+			let daily_down_payment: f64 = daily_down_payment.parse().unwrap();
 
-			db.execute("INSERT INTO car (car_id,car_images, model, owner_id, location, description, daily_amount, daily_downpayment_amt, available,booking_tokens)
+			db.execute(
+				"INSERT INTO car (car_id,car_images, model, owner_id, location, description, daily_amount, daily_downpayment_amt, available,booking_tokens)
 			VALUES
-			($1,$2, $3, $4, $5, $6, $7, $8, $9,$10)", 
-			&[
-				&car_id,
-				&r,
-				&model,
-				&user_id,
-				&location,
-				&description,
-				&daily_price,
-				&daily_down_payment,
-				&available,
-				&token
-			]).await.unwrap();
-					return StatusCode::OK;
+			($1,$2, $3, $4, $5, $6, $7, $8, $9,$10)",
+				&[&car_id, &r, &model, &user_id, &location, &description, &daily_price, &daily_down_payment, &available, &10],
+			)
+			.await
+			.unwrap();
+			return StatusCode::OK;
 			// }
 		}
-		"taxi" =>{
+		"taxi" => {
 			println!("taxi");
 			if c > 0 {
 				let q = format!("UPDATE taxi SET image_paths={} WHERE taxi_id='{}'", images, car_id);
-				match db.execute(q.as_str(), &[]).await{
-						Ok(_) => return StatusCode::OK,
-						Err(e) => {
-							eprintln!("Failed to update taxi image paths: {:?}", e);
-							return StatusCode::INTERNAL_SERVER_ERROR;},
+				match db.execute(q.as_str(), &[]).await {
+					Ok(_) => return StatusCode::OK,
+					Err(e) => {
+						eprintln!("Failed to update taxi image paths: {:?}", e);
+						return StatusCode::INTERNAL_SERVER_ERROR;
 					}
+				}
 			}
 			for column in &columns {
 				let query = format!("UPDATE taxi_verifications SET {}=$1 WHERE driver_id=$2", column);
 				match db.0.execute(&query, &[&"Pending", &user_id]).await {
-					Ok(value) =>{
-						if 0==value{
+					Ok(value) => {
+						if 0 == value {
 							return StatusCode::NOT_FOUND;
-						}else{
+						} else {
 							return StatusCode::OK;
 						}
-					},
+					}
 					_ => return StatusCode::INTERNAL_SERVER_ERROR,
 				}
 			}
 			return StatusCode::OK;
 		}
-		_=>{
+		_ => {
 			return StatusCode::BAD_REQUEST;
 		}
 	}
-
 }
 
 fn save_file(parent_dir_path: &str, filename: &str, data: &[u8]) {
