@@ -72,7 +72,7 @@ pub async fn send_notification(token: &str, mut details: Value) {
 	message_builder.notification(notification);
 	message_builder.data(&mut details).unwrap();
 	let message= message_builder.finalize();
-
+    println!("sending notification: {:?}", message);
 	let response = client.send(message).await.unwrap();
 	println!("Sent: {:?}", response);
 }
