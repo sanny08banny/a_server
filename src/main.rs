@@ -33,6 +33,7 @@ async fn main() {
 		.route("/v1/taxi/image/:driver_id/:file_name", get(file_handler))
 		.route("/v1/car/image/:owner_id/:car_id/:file_name", get(get_car))
 		.route("/v1/book/accept", post(accept_book))
+		.route("/v1/book/decline", post(accept_book))
 		.route("/v1/process_payment", post(process_payment))
 		.route("/v1/car/multi_upload", post(multi_upload)).layer(DefaultBodyLimit::disable())
 		.route("/v1/user/tokens", post(query_token))

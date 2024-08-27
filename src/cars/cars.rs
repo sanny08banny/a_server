@@ -35,7 +35,8 @@ pub struct BookingRequest {
 #[non_exhaustive]
 pub enum BookingDetailsDesc {
 	Book,
-	Unbook,
+	Cancel,
+	Decline
 }
 
 pub async fn get_cars(db: State<DbClient>) -> Json<Vec<Car>> {
@@ -44,7 +45,7 @@ pub async fn get_cars(db: State<DbClient>) -> Json<Vec<Car>> {
 	Json(cars)
 }
 
-pub async fn accept_book(db: State<DbClient>, details: Json<BookingRequest>) -> StatusCode {
+pub async fn handle_book(db: State<DbClient>, details: Json<BookingRequest>) -> StatusCode {
 	let request = details.0;
 	let mut details = json!({
 		"client_id":request.owner_id,
@@ -76,12 +77,17 @@ pub async fn accept_book(db: State<DbClient>, details: Json<BookingRequest>) -> 
 
 			StatusCode::OK
 		}
-		BookingDetailsDesc::Unbook => {
-			details["status"] = Value::String("accepted".to_string());
+		BookingDetailsDesc::Cancel => {
+			details["status"] = Value::String("cancel".to_string());
 			book_request_status(db, Json(details)).await;
 
 			StatusCode::OK
 		}
+			BookingDetailsDesc::Decline => {
+				details["status"] = Value::String("declined".to_string());
+				book_request_status(db, Json(details)).await;
+				StatusCode::OK
+			}
 	}
 }
 
