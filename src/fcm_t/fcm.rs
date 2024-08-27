@@ -4,16 +4,15 @@ use fcm;
 use hyper::StatusCode;
 use serde_json::{json, Value};
 
-
-pub async fn book_car(db: State<DbClient>, detail: Json<Value>)->StatusCode {
+pub async fn book_car(db: State<DbClient>, detail: Json<Value>) -> StatusCode {
 	start_notification(&db.0, detail.0, UserType::Owner).await
 }
 
-pub async fn book_request_status(db: State<DbClient>, detail: Json<Value>)->StatusCode {
+pub async fn book_request_status(db: State<DbClient>, detail: Json<Value>) -> StatusCode {
 	start_notification(&db.0, detail.0, UserType::Rider).await
 }
 
-pub async fn start_notification(db: &DbClient, det: Value, category: UserType) ->StatusCode{
+pub async fn start_notification(db: &DbClient, det: Value, category: UserType) -> StatusCode {
 	let sender_id = det["sender_id"].as_str().unwrap();
 	let recipient = det["recipient_id"].as_str().unwrap();
 
@@ -24,29 +23,29 @@ pub async fn start_notification(db: &DbClient, det: Value, category: UserType) -
 	let details = match category {
 		UserType::Driver => {
 			json!(
-				{
-					"ride_id": sender_id.to_owned()+"_"+recipient,
-					"user_name": user_name,
-					"user_phone": det["phone_number"],
-					"dest_name":det["dest_name"],
-					"dest_lat": det["dest_lat"],
-					"dest_lon": det["dest_lon"],
-					"current_lat": det["current_lat"],
-					"current_lon": det["current_lon"],
-					"price":det["price"],
-					"sender_id": sender_id,
-				})
-		},
+			{
+				"ride_id": sender_id.to_owned()+"_"+recipient,
+				"user_name": user_name,
+				"user_phone": det["phone_number"],
+				"dest_name":det["dest_name"],
+				"dest_lat": det["dest_lat"],
+				"dest_lon": det["dest_lon"],
+				"current_lat": det["current_lat"],
+				"current_lon": det["current_lon"],
+				"price":det["price"],
+				"sender_id": sender_id,
+			})
+		}
 		UserType::Owner => {
 			json!(
-				{
-					"booking_id": sender_id.to_owned()+"_"+recipient,
-					"user_name": user_name,
-					// "user_phone": user_phone,
-					"car_id": det["car_id"].as_str().unwrap(),
-					"sender_id": sender_id,
-				})
-		},
+			{
+				"booking_id": sender_id.to_owned()+"_"+recipient,
+				"user_name": user_name,
+				// "user_phone": user_phone,
+				"car_id": det["car_id"].as_str().unwrap(),
+				"sender_id": sender_id,
+			})
+		}
 		UserType::Rider => {
 			if det["status"].as_str().unwrap() == "accepted" {
 				json!({
@@ -57,14 +56,14 @@ pub async fn start_notification(db: &DbClient, det: Value, category: UserType) -
 					"status":"rejected"
 				})
 			}
-		},
+		}
 		UserType::Admin => todo!(),
-	}; 
-	println!("recipient= {}",recipient);
-	let Ok(res) = db.query_one("SELECT notification_token FROM users WHERE user_id=$1", &[&recipient]).await else{
+	};
+	println!("recipient= {}", recipient);
+	let Ok(res) = db.query_one("SELECT notification_token FROM users WHERE user_id=$1", &[&recipient]).await else {
 		return StatusCode::INTERNAL_SERVER_ERROR;
 	};
-	let Ok(token) = res.try_get::<_,&str>("notification_token") else{
+	let Ok(token) = res.try_get::<_, &str>("notification_token") else {
 		println!("notification token not found");
 		return StatusCode::NOT_FOUND;
 	};

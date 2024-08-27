@@ -1,4 +1,7 @@
-use axum::{extract::DefaultBodyLimit, routing::{get, post, Router}};
+use axum::{
+	extract::DefaultBodyLimit,
+	routing::{get, post, Router},
+};
 use cars::{
 	cars::{accept_book, get_cars, multi_upload, Car},
 	taxi::{accept_ride_request, decline_ride_request, get_unverified_document, get_unverified_documents, get_unverified_taxis, reqest_ride, taxi_price, verify_document},
@@ -35,7 +38,8 @@ async fn main() {
 		.route("/v1/book/accept", post(accept_book))
 		.route("/v1/book/decline", post(accept_book))
 		.route("/v1/process_payment", post(process_payment))
-		.route("/v1/car/multi_upload", post(multi_upload)).layer(DefaultBodyLimit::disable())
+		.route("/v1/car/multi_upload", post(multi_upload))
+		.layer(DefaultBodyLimit::disable())
 		.route("/v1/user/tokens", post(query_token))
 		.route("/v1/path", post(call_back_url))
 		.route("/v1/user/new", post(create_user))
@@ -55,7 +59,7 @@ async fn main() {
 		.route("/v1/taxi/init", post(cars::taxi::init_taxi))
 		.route("/v1/taxi/images/:driver_id", get(cars::taxi::taxi_images))
 		.route("/v1/book_req_status", post(fcm_t::fcm::book_request_status))
-		.route("/v1/taxi/price",post(taxi_price))
+		.route("/v1/taxi/price", post(taxi_price))
 		// taxi verification
 		.route("/v1/taxis/unverified", get(get_unverified_taxis))
 		.route("/v1/:driver_id/document/:status", get(get_unverified_documents))

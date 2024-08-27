@@ -1,5 +1,5 @@
-use axum::extract::State;
 use axum::extract::Path;
+use axum::extract::State;
 use hyper::StatusCode;
 
 use crate::db_client::DbClient;

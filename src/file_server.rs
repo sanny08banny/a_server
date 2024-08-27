@@ -14,11 +14,10 @@ pub async fn file_handler(extract: Path<(String, String)>) -> impl IntoResponse 
 	}
 }
 
-pub async fn get_car(path:Path<(String,String,String)>)
--> impl IntoResponse {
+pub async fn get_car(path: Path<(String, String, String)>) -> impl IntoResponse {
 	// owner_id,car_id,filename
-	let Path((owner_id,car_id,filename)) = path;
-	let path = format!("images/car_hire/{}/{}/{}",owner_id,car_id,filename);
+	let Path((owner_id, car_id, filename)) = path;
+	let path = format!("images/car_hire/{}/{}/{}", owner_id, car_id, filename);
 	match read_file_stream(&path).await {
 		Some(stream) => (StatusCode::OK, Body::from_stream(stream)),
 		None => (StatusCode::OK, Body::empty()),

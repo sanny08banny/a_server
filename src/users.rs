@@ -19,7 +19,7 @@ pub struct User {
 	email: String,
 	password: String,
 	name: String,
-	tel:String,
+	tel: String,
 	notification_id: String,
 }
 
@@ -27,14 +27,17 @@ pub async fn create_user(db: State<DbClient>, user: Json<User>) -> StatusCode {
 	let user = user.0;
 
 	let timestamp = Local::now().format("%Y%m%d%H%M%S").to_string();
-	let input = format!("{}-{}-{}", &user.email, timestamp,&user.tel);
+	let input = format!("{}-{}-{}", &user.email, timestamp, &user.tel);
 	let user_id = CUSTOM_ENGINE.encode(input);
 
 	let statement = "INSERT INTO users (user_id,email,user_phone,password,tokens,isadmin,isdriver,notification_token,user_name) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)";
 	let res = db
-		.execute(statement, &[&user_id, &user.email, &user.tel,&user.password, &600f64, &false, &false, &user.notification_id, &user.name])
+		.execute(
+			statement,
+			&[&user_id, &user.email, &user.tel, &user.password, &600f64, &false, &false, &user.notification_id, &user.name],
+		)
 		.await;
-	println!("{:?}",res);
+	println!("{:?}", res);
 	match res {
 		Ok(_) => StatusCode::OK,
 		Err(_) => StatusCode::NOT_MODIFIED,
@@ -42,23 +45,27 @@ pub async fn create_user(db: State<DbClient>, user: Json<User>) -> StatusCode {
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Debug)]
-pub struct Logins{
-	email:String,
-	password:String
+pub struct Logins {
+	email: String,
+	password: String,
 }
 
 pub async fn user_login(db: State<DbClient>, logins: Json<Logins>) -> Result<Json<Value>, StatusCode> {
 	let logins = logins.0;
 	let email = logins.email;
 	let password = logins.password;
-	let Some(row) = db.query_opt("SELECT user_id,isadmin,isdriver,user_name,user_phone FROM users WHERE email=$1 AND password=$2", &[&email,&password]).await.unwrap() else{
+	let Some(row) = db
+		.query_opt("SELECT user_id,isadmin,isdriver,user_name,user_phone FROM users WHERE email=$1 AND password=$2", &[&email, &password])
+		.await
+		.unwrap()
+	else {
 		return Err(StatusCode::UNAUTHORIZED);
 	};
-	let  user_id:&str =row.get(0) ;
-	let  _is_admin:bool = row.get(1);
-	let  is_driver:bool = row.get(2);
-	let  user_name:&str = row.get(3);
-	let  user_phone:&str = row.get(4);
+	let user_id: &str = row.get(0);
+	let _is_admin: bool = row.get(1);
+	let is_driver: bool = row.get(2);
+	let user_name: &str = row.get(3);
+	let user_phone: &str = row.get(4);
 	Ok(Json(json!({"user_id":user_id,
 		"user_name":user_name,
 		"is_driver":is_driver,
