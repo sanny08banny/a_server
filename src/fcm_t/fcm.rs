@@ -71,7 +71,8 @@ pub async fn send_notification(token: &str, mut details: Value) {
 	let mut message_builder = fcm::MessageBuilder::new(option_env!("NOTIFICATION_API_KEY").expect("NOTIFICATION_API_KEY not set, unable to send notifications"), token);
 	message_builder.notification(notification);
 	message_builder.data(&mut details).unwrap();
+	let message= message_builder.finalize();
 
-	let response = client.send(message_builder.finalize()).await.unwrap();
+	let response = client.send(message).await.unwrap();
 	println!("Sent: {:?}", response);
 }
