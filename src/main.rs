@@ -3,7 +3,7 @@ use axum::{
 	routing::{get, post, Router},
 };
 use cars::{
-	cars::{accept_book, get_cars, multi_upload, Car},
+	cars::{handle_book, get_cars, multi_upload, Car},
 	taxi::{accept_ride_request, decline_ride_request, get_unverified_document, get_unverified_documents, get_unverified_taxis, reqest_ride, taxi_price, verify_document},
 };
 use fcm_t::token::update_token;
@@ -35,7 +35,7 @@ async fn main() {
 		.route("/v1/cars", get(get_cars))
 		.route("/v1/taxi/image/:driver_id/:file_name", get(file_handler))
 		.route("/v1/car/image/:owner_id/:car_id/:file_name", get(get_car))
-		.route("/v1/book", post(accept_book))
+		.route("/v1/book", post(handle_book))
 		.route("/v1/process_payment", post(process_payment))
 		.route("/v1/car/multi_upload", post(multi_upload))
 		.layer(DefaultBodyLimit::disable())
