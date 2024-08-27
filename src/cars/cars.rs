@@ -1,6 +1,6 @@
 use std::{fs, io::Write};
 
-use crate::{db_client::DbClient, fcm_t::fcm::book_request_status};
+use crate::{db_client::DbClient, fcm_t::fcm::start_notification, users::UserType};
 use axum::{
 	extract::{Multipart, State},
 	Json,
@@ -36,7 +36,8 @@ pub struct BookingRequest {
 pub enum BookingDetailsDesc {
 	Book,
 	Cancel,
-	Decline
+	Decline,
+	Accept
 }
 
 pub async fn get_cars(db: State<DbClient>) -> Json<Vec<Car>> {
@@ -48,8 +49,8 @@ pub async fn get_cars(db: State<DbClient>) -> Json<Vec<Car>> {
 pub async fn handle_book(db: State<DbClient>, details: Json<BookingRequest>) -> StatusCode {
 	let request = details.0;
 	let mut details = json!({
-		"sender_id":request.owner_id,
-		"recipient_id":request.user_id,
+		"sender_id":request.user_id,
+		"recipient_id":request.owner_id,
 	});
 
 	match request.description {
@@ -72,22 +73,32 @@ pub async fn handle_book(db: State<DbClient>, details: Json<BookingRequest>) -> 
 			let new_user_tokens = user_tokens - booking_tokens;
 			let x = format!("UPDATE users SET tokens='{}' WHERE user_id='{}'", new_user_tokens, request.user_id);
 			db.execute(x.as_str(), &[]).await.unwrap();
-			details["status"] = Value::String("accepted".to_string());
-			book_request_status(db, Json(details)).await;
+			details["status"] = Value::String("booking request".to_string());
+			start_notification(&db, details, UserType::Owner).await;
+			
 
 			StatusCode::OK
 		}
 		BookingDetailsDesc::Cancel => {
-			details["status"] = Value::String("cancel".to_string());
-			book_request_status(db, Json(details)).await;
+			details["status"] = Value::String("cancelled".to_string());
+			start_notification(&db, details, UserType::Owner).await;
 
 			StatusCode::OK
 		}
 			BookingDetailsDesc::Decline => {
+				details["sender_id"] = Value::String(request.owner_id.to_string());
+				details["recipient_id"] = Value::String(request.user_id.to_string());
 				details["status"] = Value::String("declined".to_string());
-				book_request_status(db, Json(details)).await;
+				start_notification(&db, details, UserType::Rider).await;
 				StatusCode::OK
 			}
+				BookingDetailsDesc::Accept =>{
+					details["sender_id"] = Value::String(request.owner_id.to_string());
+					details["recipient_id"] = Value::String(request.user_id.to_string());
+					details["status"] = Value::String("accepted".to_string());
+					start_notification(&db, details, UserType::Rider).await;
+                    StatusCode::OK
+				},
 	}
 }
 

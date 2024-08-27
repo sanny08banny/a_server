@@ -1,13 +1,8 @@
 use crate::{db_client::DbClient, users::UserType};
-use axum::{extract::State, Json};
 use fcm;
 use hyper::StatusCode;
 use serde_json::{json, Value};
 
-
-pub async fn book_request_status(db: State<DbClient>, detail: Json<Value>) -> StatusCode {
-	start_notification(&db.0, detail.0, UserType::Rider).await
-}
 
 pub async fn start_notification(db: &DbClient, det: Value, category: UserType) -> StatusCode {
 	let sender_id = det["sender_id"].as_str().unwrap();
