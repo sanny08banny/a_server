@@ -51,6 +51,7 @@ pub async fn handle_book(db: State<DbClient>, details: Json<BookingRequest>) -> 
 	let mut details = json!({
 		"sender_id":request.user_id,
 		"recipient_id":request.owner_id,
+		"car_id":request.car_id,
 	});
 
 	match request.description {
