@@ -4,9 +4,6 @@ use fcm;
 use hyper::StatusCode;
 use serde_json::{json, Value};
 
-pub async fn book_car(db: State<DbClient>, detail: Json<Value>) -> StatusCode {
-	start_notification(&db.0, detail.0, UserType::Owner).await
-}
 
 pub async fn book_request_status(db: State<DbClient>, detail: Json<Value>) -> StatusCode {
 	start_notification(&db.0, detail.0, UserType::Rider).await

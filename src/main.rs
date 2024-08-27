@@ -47,7 +47,6 @@ async fn main() {
 		.route("/v1/car/create_review", post(post(create_review)))
 		.route("/v1/user/admin_req", post(change_category))
 		.route("/v1/taxi/request", post(reqest_ride))
-		.route("/v1/book_car", post(fcm_t::fcm::book_car))
 		.route("/v1/token_update/:user_id/:token", get(update_token))
 		.route("/v1/taxi/accept", post(accept_ride_request))
 		.route("/v1/taxi/decline", post(decline_ride_request))
