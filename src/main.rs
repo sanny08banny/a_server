@@ -3,7 +3,7 @@ use axum::{
 	routing::{get, post, Router},
 };
 use cars::{
-	cars::{handle_book, get_cars, multi_upload, Car},
+	cars::{get_cars, handle_book, multi_upload, Car},
 	taxi::{accept_ride_request, decline_ride_request, get_unverified_document, get_unverified_documents, get_unverified_taxis, reqest_ride, taxi_price, verify_document},
 };
 use fcm_t::token::update_token;

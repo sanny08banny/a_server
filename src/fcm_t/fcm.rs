@@ -3,7 +3,6 @@ use fcm;
 use hyper::StatusCode;
 use serde_json::{json, Value};
 
-
 pub async fn start_notification(db: &DbClient, det: Value, category: UserType) -> StatusCode {
 	let sender_id = det["sender_id"].as_str().unwrap();
 	let recipient = det["recipient_id"].as_str().unwrap();
@@ -71,8 +70,8 @@ pub async fn send_notification(token: &str, mut details: Value) {
 	let mut message_builder = fcm::MessageBuilder::new(option_env!("NOTIFICATION_API_KEY").expect("NOTIFICATION_API_KEY not set, unable to send notifications"), token);
 	message_builder.notification(notification);
 	message_builder.data(&mut details).unwrap();
-	let message= message_builder.finalize();
-    println!("sending notification: {:?}", message);
+	let message = message_builder.finalize();
+	println!("sending notification: {:?}", message);
 	let response = client.send(message).await.unwrap();
 	println!("Sent: {:?}", response);
 }

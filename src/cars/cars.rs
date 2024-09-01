@@ -37,7 +37,7 @@ pub enum BookingDetailsDesc {
 	Book,
 	Cancel,
 	Decline,
-	Accept
+	Accept,
 }
 
 pub async fn get_cars(db: State<DbClient>) -> Json<Vec<Car>> {
@@ -76,7 +76,6 @@ pub async fn handle_book(db: State<DbClient>, details: Json<BookingRequest>) -> 
 			db.execute(x.as_str(), &[]).await.unwrap();
 			details["status"] = Value::String("booking request".to_string());
 			start_notification(&db, details, UserType::Owner).await;
-			
 
 			StatusCode::OK
 		}
@@ -86,20 +85,20 @@ pub async fn handle_book(db: State<DbClient>, details: Json<BookingRequest>) -> 
 
 			StatusCode::OK
 		}
-			BookingDetailsDesc::Decline => {
-				details["sender_id"] = Value::String(request.owner_id.to_string());
-				details["recipient_id"] = Value::String(request.user_id.to_string());
-				details["status"] = Value::String("declined".to_string());
-				start_notification(&db, details, UserType::Rider).await;
-				StatusCode::OK
-			}
-				BookingDetailsDesc::Accept =>{
-					details["sender_id"] = Value::String(request.owner_id.to_string());
-					details["recipient_id"] = Value::String(request.user_id.to_string());
-					details["status"] = Value::String("accepted".to_string());
-					start_notification(&db, details, UserType::Rider).await;
-                    StatusCode::OK
-				},
+		BookingDetailsDesc::Decline => {
+			details["sender_id"] = Value::String(request.owner_id.to_string());
+			details["recipient_id"] = Value::String(request.user_id.to_string());
+			details["status"] = Value::String("declined".to_string());
+			start_notification(&db, details, UserType::Rider).await;
+			StatusCode::OK
+		}
+		BookingDetailsDesc::Accept => {
+			details["sender_id"] = Value::String(request.owner_id.to_string());
+			details["recipient_id"] = Value::String(request.user_id.to_string());
+			details["status"] = Value::String("accepted".to_string());
+			start_notification(&db, details, UserType::Rider).await;
+			StatusCode::OK
+		}
 	}
 }
 
@@ -252,7 +251,7 @@ pub async fn multi_upload(db: State<DbClient>, mut multipart: Multipart) -> Stat
 				"INSERT INTO car (car_id,car_images, model, owner_id, location, description, daily_amount, daily_downpayment_amt, available,booking_tokens)
 			VALUES
 			($1,$2, $3, $4, $5, $6, $7, $8, $9,$10)",
-				&[&car_id, &r, &model, &user_id, &location, &description, &daily_price, &daily_down_payment, &available, &10],
+				&[&car_id, &r, &model, &user_id, &location, &description, &daily_price, &daily_down_payment, &available, &10 as _],
 			)
 			.await
 			.unwrap();
