@@ -30,7 +30,7 @@ pub async fn create_user(db: State<DbClient>, user: Json<User>) -> StatusCode {
 	let input = format!("{}-{}-{}", &user.email, timestamp, &user.tel);
 	let user_id = CUSTOM_ENGINE.encode(input);
 
-	let statement = "INSERT INTO users (user_id,email,user_phone,password,tokens,isadmin,isdriver,notification_token,user_name) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)";
+	let statement = "INSERT INTO users (user_id,email,phone_number,password,tokens,is_admin,is_driver,notification_token,user_name) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)";
 	let res = db
 		.execute(
 			statement,
@@ -55,7 +55,10 @@ pub async fn user_login(db: State<DbClient>, logins: Json<Logins>) -> Result<Jso
 	let email = logins.email;
 	let password = logins.password;
 	let Some(row) = db
-		.query_opt("SELECT user_id,isadmin,isdriver,user_name,user_phone FROM users WHERE email=$1 AND password=$2", &[&email, &password])
+		.query_opt(
+			"SELECT user_id,is_admin,is_driver,user_name,phone_number FROM users WHERE email=$1 AND password=$2",
+			&[&email, &password],
+		)
 		.await
 		.unwrap()
 	else {
@@ -78,7 +81,7 @@ pub async fn change_category(db: State<DbClient>, j: Json<Value>) -> Json<Value>
 	let id: u32 = j["user_id"].as_str().unwrap().parse().unwrap();
 	let category = j["category"].as_str().unwrap();
 	if category == "driver" {
-		let q = format!("UPDATE users SET isdriver=true WHERE user_id='{}'", id);
+		let q = format!("UPDATE users SET is_driver=true WHERE user_id='{}'", id);
 		let query = db.execute(q.as_str(), &[]).await;
 		if query.is_err() {
 			let p = json!({"user_id":id,"is_driver":false});
@@ -87,7 +90,7 @@ pub async fn change_category(db: State<DbClient>, j: Json<Value>) -> Json<Value>
 		let p = json!({"user_id":id,"is_driver":true});
 		return Json(p);
 	} else if category == "admin" {
-		let q = format!("UPDATE users SET isadmin=true WHERE user_id='{}'", id);
+		let q = format!("UPDATE users SET is_admin=true WHERE user_id='{}'", id);
 		let query = db.execute(q.as_str(), &[]).await;
 		if query.is_err() {
 			let p = json!({"user_id":id,"is_admin":false});
@@ -96,7 +99,7 @@ pub async fn change_category(db: State<DbClient>, j: Json<Value>) -> Json<Value>
 		let p = json!({"user_id":id,"is_admin":true});
 		return Json(p);
 	} else if category == "normal" {
-		let q = format!("UPDATE users SET isadmin=false,isdriver=false WHERE user_id='{}'", id);
+		let q = format!("UPDATE users SET is_admin=false,is_driver=false WHERE user_id='{}'", id);
 		let query = db.execute(q.as_str(), &[]).await;
 		if query.is_err() {
 			let p = json!({"user_id":id,"is_admin":false,"is_driver":false});

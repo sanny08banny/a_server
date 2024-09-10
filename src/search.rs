@@ -6,8 +6,7 @@ async fn cars(db: &DbClient, search_params: Vec<(String, String)>) -> Vec<Car> {
 	let mut x = Vec::new();
 
 	for (key, value) in search_params {
-		let query = format!("SELECT * FROM car WHERE {}='{}'", &value, key);
-		let rows = db.query(query.as_str(), &[]).await.unwrap_or_else(|_| panic!("Error on query"));
+		let rows = db.query("SELECT * FROM car WHERE $1=$2", &[&key, &value]).await.unwrap();
 		let iter = rows.iter().map(Car::from_row);
 
 		x.extend(iter)
