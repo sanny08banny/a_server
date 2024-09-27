@@ -208,7 +208,7 @@ pub async fn start_ride_request(db: State<DbClient>, ride_details: RideDetails) 
 	let mut min_distance = 0.00;
 	let mut i = 0;
 	let mut skip = false;
-	let firebase = Firebase::new("https://naturaw-64116-default-rtdb.firebaseio.com/")
+	let firebase = Firebase::new("https://abiri-6ba83-default-rtdb.firebaseio.com/")
 		.unwrap()
 		.at("taxis")
 		.at("available")
