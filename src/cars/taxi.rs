@@ -101,10 +101,10 @@ pub struct Taxi {
 }
 
 pub async fn is_driver(db: State<DbClient>, id: Path<String>) -> impl IntoResponse {
-	let Ok(y) = db.query_one("SELECT isdriver FROM users WHERE user_id=$1", &[&id.0]).await else {
+	let Ok(y) = db.query_one("SELECT is_driver FROM users WHERE user_id=$1", &[&id.0]).await else {
 		return "false".to_owned();
 	};
-	let r: bool = y.get("isdriver");
+	let r: bool = y.get("is_driver");
 	return r.to_string();
 }
 
@@ -132,7 +132,7 @@ pub async fn init_taxi(db: State<DbClient>, taxi: Json<Taxi>) -> impl IntoRespon
 			if let Err(err) = db.execute(statement, &[&taxi.driver_id, &status, &status, &status, &status, &status]).await {
 				return (StatusCode::INTERNAL_SERVER_ERROR, err.to_string());
 			};
-			match db.execute("UPDATE users SET isdriver=true WHERE user_id=$1", &[&taxi.driver_id]).await {
+			match db.execute("UPDATE users SET is_driver=true WHERE user_id=$1", &[&taxi.driver_id]).await {
 				Ok(_) => (StatusCode::OK, taxi_id),
 				Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
 			}
@@ -247,7 +247,7 @@ pub async fn start_ride_request(db: State<DbClient>, ride_details: RideDetails) 
 	// if min_distance>1800.00{
 	// 	return StatusCode::NOT_FOUND;
 	// }
-	let Ok(phone_number) = db.query_one("SELECT user_phone FROM users WHERE user_id=$1", &[&ride_details.pricing_details.rider_id]).await else {
+	let Ok(phone_number) = db.query_one("SELECT phone_number FROM users WHERE user_id=$1", &[&ride_details.pricing_details.rider_id]).await else {
 		return StatusCode::INTERNAL_SERVER_ERROR;
 	};
 	let phone_number = phone_number.get::<_, String>(0);
@@ -282,7 +282,7 @@ pub async fn accept_ride_request(db: State<DbClient>, res: Json<Value>) -> Statu
 	let Ok(res) = db.query_one("SELECT plate_number,color,model FROM taxi WHERE driver_id=$1", &[&driver_id]).await else {
 		return StatusCode::INTERNAL_SERVER_ERROR;
 	};
-	let Ok(n) = db.query_one("SELECT user_name,user_phone FROM users WHERE user_id=$1", &[&driver_id]).await else {
+	let Ok(n) = db.query_one("SELECT user_name,phone_number FROM users WHERE user_id=$1", &[&driver_id]).await else {
 		return StatusCode::INTERNAL_SERVER_ERROR;
 	};
 	let details = json!({
@@ -304,7 +304,18 @@ pub async fn decline_ride_request(db: State<DbClient>, ride_details: Json<RideDe
 pub async fn taxi_images(db: State<DbClient>, det: Path<String>) -> impl IntoResponse {
 	match db.query_opt("SELECT image_paths FROM taxi WHERE driver_id=$1", &[&det.0]).await {
 		Ok(taxi) => match taxi {
-			Some(y) => return (StatusCode::OK, Json(Some(y.get::<_, Vec<String>>(0)))),
+			Some(row) => {
+				let Ok(string) = row.try_get::<_, String>(0) else {
+					return (StatusCode::NOT_FOUND, Json(None));
+				};
+
+				let Ok(paths) = serde_json::from_str::<Vec<String>>(&string) else {
+					eprintln!("Unable to decode image_paths as valid JSON string");
+					return (StatusCode::INTERNAL_SERVER_ERROR, Json(None));
+				};
+
+				return (StatusCode::OK, Json(Some(paths)));
+			}
 			None => return (StatusCode::NOT_FOUND, Json(None)),
 		},
 		Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(None)),

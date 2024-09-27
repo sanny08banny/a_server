@@ -8,7 +8,7 @@ pub async fn start_notification(db: &DbClient, det: Value, category: UserType) -
 	let recipient = det["recipient_id"].as_str().unwrap();
 
 	// get username from db
-	let res = db.query("SELECT user_name,user_phone FROM users WHERE user_id=$1", &[&sender_id]).await.unwrap();
+	let res = db.query("SELECT user_name,phone_number FROM users WHERE user_id=$1", &[&sender_id]).await.unwrap();
 	let user_name: String = res[0].get("user_name");
 
 	let details = match category {

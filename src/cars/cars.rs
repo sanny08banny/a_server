@@ -230,12 +230,8 @@ pub async fn multi_upload(db: State<DbClient>, mut multipart: Multipart) -> Stat
 			}
 		}
 	}
-	let r = images.clone();
-	let c = r.len();
-	for (i, x) in r.iter().enumerate() {
-		images[i] = format!("'{}'", x);
-	}
-	let images = format!("ARRAY[{}]", images.join(","));
+
+	let car_images = serde_json::to_string(&images).unwrap();
 	match category.as_str() {
 		"car_hire" => {
 			// if c > 0 {
@@ -243,7 +239,6 @@ pub async fn multi_upload(db: State<DbClient>, mut multipart: Multipart) -> Stat
 			// 	db.execute(q.as_str(), &[]).await.unwrap();
 			// 	return StatusCode::OK;
 			// } else {
-			println!("{}", images);
 			let daily_price: f64 = daily_price.parse().unwrap();
 			let daily_down_payment: f64 = daily_down_payment.parse().unwrap();
 
@@ -251,17 +246,16 @@ pub async fn multi_upload(db: State<DbClient>, mut multipart: Multipart) -> Stat
 				"INSERT INTO car (car_id,car_images, model, owner_id, location, description, daily_amount, daily_downpayment_amt, available,booking_tokens)
 			VALUES
 			($1,$2, $3, $4, $5, $6, $7, $8, $9,$10)",
-				&[&car_id, &r, &model, &user_id, &location, &description, &daily_price, &daily_down_payment, &available, &10 as _],
+				&[&car_id, &car_images, &model, &user_id, &location, &description, &daily_price, &daily_down_payment, &available, &10 as _],
 			)
 			.await
 			.unwrap();
 			return StatusCode::OK;
-			// }
 		}
 		"taxi" => {
 			println!("taxi");
-			if c > 0 {
-				let q = format!("UPDATE taxi SET image_paths={} WHERE taxi_id='{}'", images, car_id);
+			if images.len() > 0 {
+				let q = format!("UPDATE taxi SET image_paths={} WHERE taxi_id='{}'", car_images, car_id);
 				match db.execute(q.as_str(), &[]).await {
 					Ok(_) => return StatusCode::OK,
 					Err(e) => {
