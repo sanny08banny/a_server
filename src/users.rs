@@ -31,6 +31,7 @@ pub async fn create_user(db: State<DbClient>, user: Json<User>) -> StatusCode {
 	let user_id = CUSTOM_ENGINE.encode(input);
 
 	let statement = "INSERT INTO users (user_id,email,phone_number,password,tokens,is_admin,is_driver,notification_token,user_name) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)";
+
 	let res = db
 		.execute(
 			statement,

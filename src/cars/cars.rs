@@ -22,6 +22,23 @@ pub struct Car {
 	pub available: bool,
 }
 
+impl Car {
+    pub fn from_row(row: &tokio_postgres::Row) -> Self {
+        Car {
+            car_images: serde_json::from_str::<Vec<String>>(row.get::<_, String>("car_images").as_str()).unwrap_or_default(),
+            model: row.get("model"),
+            car_id: row.get("car_id"),
+            owner_id: row.get("owner_id"),
+            location: row.get("location"),
+            description: row.get("description"),
+            daily_amount: row.get("daily_amount"),
+            daily_downpayment_amt: row.get("daily_downpayment_amt"),
+            available: row.get("available"),
+        }
+    }
+}
+
+
 #[derive(serde::Deserialize, Debug)]
 pub struct BookingRequest {
 	user_id: String,

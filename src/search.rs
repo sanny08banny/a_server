@@ -1,6 +1,7 @@
 use crate::{db_client::DbClient, Car};
 use axum::{extract::State, Json};
 use postgres_from_row::FromRow;
+// use postgres_from_row::FromRow;
 
 async fn cars(db: &DbClient, search_params: Vec<(String, String)>) -> Vec<Car> {
 	let mut x = Vec::new();
